@@ -1,12 +1,11 @@
-import { useFetcher, useLoaderData } from "react-router";
 import type { Data } from "@measured/puck";
-import { Puck, Render } from "@measured/puck";
+import { Render } from "@measured/puck";
 
 import type { Route } from "./+types/puck-splat";
 import { config } from "../../puck.config";
 import { resolvePuckPath } from "~/lib/resolve-puck-path.server";
 import { getPage, savePage } from "~/lib/pages.server";
-import editorStyles from "@measured/puck/puck.css?url";
+import { PuckEditor } from "lib/components/puck-editor";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const pathname = params["*"] ?? "/";
@@ -40,9 +39,9 @@ export async function loader({ params }: Route.LoaderArgs) {
 export function meta({ data: loaderData }: Route.MetaArgs) {
   return [
     {
-      title: loaderData.isEditorRoute
+      title: loaderData?.isEditorRoute
         ? `Edit: ${loaderData.path}`
-        : loaderData.data.root.title,
+        : loaderData?.data.root.title,
     },
   ];
 }
@@ -55,38 +54,12 @@ export async function action({ params, request }: Route.ActionArgs) {
   await savePage(path, body.data);
 }
 
-function Editor() {
-  const loaderData = useLoaderData<typeof loader>();
-  const fetcher = useFetcher<typeof action>();
-
-  return (
-    <>
-      <link rel="stylesheet" href={editorStyles} id="puck-css" />
-      <Puck
-        config={config}
-        data={loaderData.data}
-        onPublish={async (data) => {
-          await fetcher.submit(
-            {
-              data,
-            },
-            {
-              action: "",
-              method: "post",
-              encType: "application/json",
-            }
-          );
-        }}
-      />
-    </>
-  );
-}
 
 export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
   return (
     <div>
       {loaderData.isEditorRoute ? (
-        <Editor />
+        <PuckEditor />
       ) : (
         <Render config={config} data={loaderData.data} />
       )}

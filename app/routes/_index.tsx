@@ -1,5 +1,5 @@
 import type { Route } from "./+types/_index";
-import { PuckRender } from "~/components/puck-render";
+import { PuckRender } from "lib/components/puck-render";
 import { resolvePuckPath } from "~/lib/resolve-puck-path.server";
 import { getPage } from "~/lib/pages.server";
 
