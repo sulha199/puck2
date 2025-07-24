@@ -5,19 +5,19 @@ import dts from 'vite-plugin-dts'
 import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [reactRouter(), tsconfigPaths(), dts({ tsconfigPath: './tsconfig.build.json' })],
-  build: {
-    lib: {
-      entry: resolve(__dirname, 'lib/main.ts'),
-      formats: ['es'],
-    },
-    copyPublicDir: false,
-    rollupOptions: {
-      external: ['react', 'react/jsx-runtime', '@measured/puck'],
-      output: {
-        assetFileNames: 'assets/[name][extname]',
-        entryFileNames: '[name].js',
-      },
-    },
-  },
+  plugins: [reactRouter(), tsconfigPaths(),],
+  // build: {
+  //   lib: {
+  //     entry: resolve(__dirname, 'lib/main.ts'),
+  //     formats: ['es'],
+  //   },
+  //   copyPublicDir: false,
+  //   rollupOptions: {
+  //     external: ['react', 'react/jsx-runtime', '@measured/puck'],
+  //     output: {
+  //       assetFileNames: 'assets/[name][extname]',
+  //       entryFileNames: '[name].js',
+  //     },
+  //   },
+  // },
 })
