@@ -6,7 +6,7 @@ import type { FC } from 'react'
 type Props = {
   EmailHeader: { version: number; children: Slot }
   EmailFooter: { content: Slot }
-  EmailTwoColumnText: { col1: Slot; col2: Slot }
+  EmailTwoColumnText: { col1: Slot; col2: Slot, type: 'type-1' | 'type-2' }
   HtmlImage: { src: string;}
   RendererTextArea: RendererTextAreaAttrProps
   // HtmlSection: { children: Slot; version: number }
@@ -64,6 +64,7 @@ const COMPONENTS_DATA_MAP = {
             },
           },
         ],
+        type: 'type-2',
       },
   RendererTextArea: {
     content: 'Edit text',
@@ -191,6 +192,20 @@ export const config: Config<Props> = {
           type: 'slot',
           allow: ['RendererTextArea'],
         },
+        type: {
+          type: 'select',
+          label: 'Type',
+          options: [
+            {
+              label: 'Type 1',
+              value: 'type-1'
+            },
+            {
+              label: 'Type 2',
+              value: 'type-2'
+            }
+          ]
+        }
       },
       defaultProps: COMPONENTS_DATA_MAP.EmailTwoColumnText,
     },
@@ -246,5 +261,5 @@ export const config: Config<Props> = {
       title: 'Basic Element',
       components: ['HtmlImage', 'RendererTextArea'],
     },
-  }
+  },
 }

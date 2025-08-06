@@ -4,9 +4,10 @@ import { config } from 'puck.config'
 // // import type { loader } from '~/routes/_index'
 // import type { action } from '~/routes/puck-splat'
 import editorStyles from '@measured/puck/puck.css?url'
-import { PuckCkEditor } from './EditorRichText/CkEditor'
-import { useEffect, useState } from 'react'
+import { PuckCkEditor } from './EditorRichText/CkEditor/CkEditor'
+import { useEffect, useRef, useState } from 'react'
 import { loadStorage, saveStorage } from '~/routes/_index'
+import './puck-editor.scss'
 
 const styleUrls = [
   'https://3.0.devk8s.azavista.com/azavista-builder-newsletter-default.css',
@@ -18,6 +19,7 @@ export function PuckEditor() {
   // const loaderData = useLoaderData<typeof loader>()
   const data = loadStorage()
   const [ isReadOnly, setIsReadOnly ] = useState(false)
+  const iframeRef = useRef<Document>(null)
 
   return (
     <>
@@ -36,9 +38,28 @@ export function PuckEditor() {
           fields: ({ children }) => {
             const usePuck = createUsePuck()
 
-            const type = usePuck((s) => s.selectedItem?.type || 'Nothing')
+            const puckStore = usePuck((s) => s)
+            const selectedItem = puckStore?.selectedItem
+            const type = selectedItem?.type || 'Nothing';
 
-            return <div className={`${type} sfddfdfff`}>{children}</div>
+            const className = `puck-fields__${type}`
+
+            const selectParentSection = () => {
+              console.log(puckStore)
+              const parentElement = iframeRef
+              .current?.querySelector(`*[data-puck-component]:has(*[data-puck-component=${selectedItem?.props.id}])`);
+              parentElement?.children?.[0]?.dispatchEvent(new MouseEvent("click", {
+                  "view": window,
+                  "bubbles": true,
+                  "cancelable": false
+              }))
+            }
+
+            return <div className={className}>              
+              <div className={`${className}__container`}>{children}</div>
+              {type === 'RendererTextArea' && <button onClick={selectParentSection} className={`${className}__close`}>X</button>}
+              
+            </div>
           },
           iframe: ({ children, document }) => {
             useEffect(() => {
@@ -49,10 +70,19 @@ export function PuckEditor() {
                   link.rel = 'stylesheet'
                   document.head.appendChild(link)
                 })
+                iframeRef.current = document;
               }
             }, [document])
             return <>{children}</>
           },
+          headerActions: ({children}) => {
+            return <div className='dsdsdsdsdsd'>{children}</div>
+          },
+          outline: ({children}) => {
+            return <div className="puck-outlines">{children}</div>
+          }
+          
+
         }}
         onPublish={async (data) => {
           setIsReadOnly(true);

@@ -1,0 +1,36 @@
+.puck-fields__RendererTextArea  {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    z-index: 99999;
+
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.2);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+
+    padding: 1em 1em;
+
+    &__container {
+      background-color: #fff;
+    }
+
+    &__close {
+      position: fixed;
+      top: 1em;
+      right: 1em;
+      background-color: #fff;
+      padding: 1em;
+    }
+}
+
+.puck-outlines {
+  *[class*="Layer-zones"] {
+    display: none !important;
+  }
+}
