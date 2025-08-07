@@ -1,11 +1,11 @@
-import { createUsePuck, Puck, useGetPuck } from '@measured/puck'
+import { createUsePuck, Puck, useGetPuck, type Field, type FieldProps, type FieldRenderFunctions } from '@measured/puck'
 import { config } from 'puck.config'
 // import { useLoaderData, useFetcher } from 'react-router'
 // // import type { loader } from '~/routes/_index'
 // import type { action } from '~/routes/puck-splat'
 import editorStyles from '@measured/puck/puck.css?url'
 import { PuckCkEditor } from './EditorRichText/CkEditor/CkEditor'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type FC, type PropsWithChildren, type ReactNode } from 'react'
 import { loadStorage, saveStorage } from '~/routes/_index'
 import './puck-editor.scss'
 
@@ -15,10 +15,19 @@ const styleUrls = [
   'https://3.0.devk8s.azavista.com/theme/63e50adf44e7429377b6b4ba.css',
 ]
 
+function FieldTypeContainer<T extends keyof FieldRenderFunctions, FieldType extends { type: T }>(props: FieldProps<FieldType, any> & PropsWithChildren<{name: string}>) {
+  const { children, field, value, name} = props;
+  return (
+    <div className={`puck-fields__field puck-fields__field--name_${name} puck-fields__field--type_${field.type} puck-fields__field--value_${value}`}>
+      {children}
+    </div>
+  )
+}
+
 export function PuckEditor() {
   // const loaderData = useLoaderData<typeof loader>()
   const data = loadStorage()
-  const [ isReadOnly, setIsReadOnly ] = useState(false)
+  const [isReadOnly, setIsReadOnly] = useState(false)
   const iframeRef = useRef<Document>(null)
 
   return (
@@ -32,34 +41,77 @@ export function PuckEditor() {
         }}
         overrides={{
           fieldTypes: {
-            textarea: props => <PuckCkEditor {...props} />,
-          },
+            textarea: (props) => (
+              <FieldTypeContainer {...props}>
+                <PuckCkEditor {...props} />{' '}
+              </FieldTypeContainer>
+            ),
+            text: (props) => {
+              const { children, id, name } = props
+              const isImageInput = name === 'src' && id?.startsWith('HtmlImage-')
 
-          fields: ({ children }) => {
+              if (isImageInput) {
+                return <FieldTypeContainer {...props}>
+                  <div>Here should show Image picker <br/>and image thumb nails</div>
+                </FieldTypeContainer>
+              }
+              return <FieldTypeContainer {...props}></FieldTypeContainer>
+            },
+            array: FieldTypeContainer,
+            external: FieldTypeContainer,
+            number: FieldTypeContainer,
+            object: FieldTypeContainer,
+            radio: FieldTypeContainer,
+            select: FieldTypeContainer,
+            slot: FieldTypeContainer,
+          } satisfies FieldRenderFunctions,
+          components: (props) => {
+            const { children } = props
+
+            if (Array.isArray(children)) {
+              return children.filter((chd) => chd?.key !== 'other') as any
+            }
+            return <>{props.children}</>
+          },         
+          fields: (props) => {
+            const { children } = props
             const usePuck = createUsePuck()
 
             const puckStore = usePuck((s) => s)
             const selectedItem = puckStore?.selectedItem
-            const type = selectedItem?.type || 'Nothing';
+            const type = selectedItem?.type || 'Nothing'
 
-            const className = `puck-fields__${type}`
+            const className = `puck-fields`
+            const classNameWithType = `${className}--type_${type}`
 
             const selectParentSection = () => {
-              console.log(puckStore)
-              const parentElement = iframeRef
-              .current?.querySelector(`*[data-puck-component]:has(*[data-puck-component=${selectedItem?.props.id}])`);
-              parentElement?.children?.[0]?.dispatchEvent(new MouseEvent("click", {
-                  "view": window,
-                  "bubbles": true,
-                  "cancelable": false
-              }))
+              const parentElement = iframeRef.current?.querySelector(
+                `*[data-puck-component]:has(*[data-puck-component=${selectedItem?.props.id}])`
+              )
+              parentElement?.children?.[0]?.dispatchEvent(
+                new MouseEvent('click', {
+                  view: window,
+                  bubbles: true,
+                  cancelable: false,
+                })
+              )
             }
 
-            return <div className={className}>              
-              <div className={`${className}__container`}>{children}</div>
-              {type === 'RendererTextArea' && <button onClick={selectParentSection} className={`${className}__close`}>X</button>}
-              
-            </div>
+            const shouldDisplayPopup = type === 'RendererTextArea' || type === 'HtmlImage'
+            const popupClassname = shouldDisplayPopup ? `${className}--popup-element` : ''
+
+            return (
+              <div className={`${className} ${classNameWithType} ${popupClassname}`}>
+                <div className={`${className}__container`}>
+                  {children}
+                  {shouldDisplayPopup && (
+                    <button onClick={selectParentSection} className={`${className}__close`}>
+                      X
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
           },
           iframe: ({ children, document }) => {
             useEffect(() => {
@@ -70,22 +122,23 @@ export function PuckEditor() {
                   link.rel = 'stylesheet'
                   document.head.appendChild(link)
                 })
-                iframeRef.current = document;
+                iframeRef.current = document
               }
             }, [document])
             return <>{children}</>
           },
-          headerActions: ({children}) => {
+          headerActions: ({ children }) => {
             return <div className='dsdsdsdsdsd'>{children}</div>
           },
-          outline: ({children}) => {
-            return <div className="puck-outlines">{children}</div>
-          }
-          
+          outline: ({ children }) => {
+            const usePuck = createUsePuck()
+            const puckStore = usePuck((s) => s)
 
+            return <div className='puck-outlines'>{children}</div>
+          },
         }}
         onPublish={async (data) => {
-          setIsReadOnly(true);
+          setIsReadOnly(true)
 
           console.log('savePage', { data })
           saveStorage(data)

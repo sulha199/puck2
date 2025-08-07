@@ -1,12 +1,14 @@
-.puck-fields__RendererTextArea  {
+.puck-fields {
+  &--popup-element {
     position: fixed;
     left: 0px;
     top: 0px;
     z-index: 99999;
 
     width: 100vw;
+    max-width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.6);
 
     display: flex;
     flex-direction: column;
@@ -14,23 +16,66 @@
     justify-content: center;
     overflow: auto;
 
-    padding: 1em 1em;
+    .puck-fields {
+      &__container {
+        padding-top: 1em;
+        position: relative;
+        background-color: #fff;
+        max-width: calc(100% - 2em);
+        margin: 1em auto;
+      }
 
-    &__container {
-      background-color: #fff;
-    }
+      &__close {
+        position: absolute;
+        top: .5em;
+        right: .5em;
+        background-color: #ccc;
 
-    &__close {
-      position: fixed;
-      top: 1em;
-      right: 1em;
-      background-color: #fff;
-      padding: 1em;
+        font-size: 1.5em;
+        line-height: 1em;
+
+        border-radius: 50%;
+        border: 1px solid;  
+
+        width: 1em;
+        height: 1em;
+        padding: 0px;
+
+      }
     }
+  }
+
+  &--type_RendererTextArea {
+    .puck-fields__field--name_useTranslation label {
+      display: flex;
+      gap: 1em;
+      align-items: center;
+      > * {
+        width: auto;
+        padding: 0.5em;
+      }
+      select {
+        padding-inline-end: 2em;
+      }
+    }
+  }
+
+  &__container {
+    &:has(.puck-fields__field--name_useTranslation.puck-fields__field--value_0) {
+      > *:has(.puck-fields__field--name_contentTranslations) {
+        display: none;
+      }
+    }
+    &:has(.puck-fields__field--name_useTranslation.puck-fields__field--value_1) {
+      > *:has(.puck-fields__field--name_content) {
+        display: none;
+      }
+    }
+  }
 }
 
 .puck-outlines {
-  *[class*="Layer-zones"] {
+  *[class*='Layer-zones'] {
     display: none !important;
   }
 }

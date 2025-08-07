@@ -17,6 +17,7 @@
     "paths": {
       "~/*": ["./app/*"]
     },
+    "allowJs": true,
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
