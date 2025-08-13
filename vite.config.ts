@@ -5,7 +5,10 @@ import dts from 'vite-plugin-dts'
 import { resolve } from 'path'
 
 export default defineConfig({
-  base: '/puck-demo-email/',
+  base: '/puck2/',
+  build: {
+    outDir: 'docs'
+  },
   plugins: [reactRouter(), tsconfigPaths(),],
   // build: {
   //   lib: {
