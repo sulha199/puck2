@@ -61,7 +61,7 @@
   }
 
   &__container {
-    &:has(.puck-fields__field--name_useTranslation.puck-fields__field--value_0) {
+    &:has(.puck-fields__field--name_useTranslation:not(.puck-fields__field--value_1)) {
       > *:has(.puck-fields__field--name_contentTranslations) {
         display: none;
       }
