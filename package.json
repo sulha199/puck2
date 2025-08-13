@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build && mv build/client docs",
+    "build": "react-router build",
     "build:lib": "tsc --p ./tsconfig.build.json && vite build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
