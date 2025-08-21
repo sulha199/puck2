@@ -33,6 +33,7 @@ import {
   TableSelection,
   AutoLink,
   LinkEditing,
+  Editor,
 } from 'ckeditor5'
 // import { ClassicEditor, } from 'ckeditor5'
 // import { ClassicEditor } from '@ckeditor/ckeditor5-editor-classic'
@@ -44,6 +45,7 @@ import { useEffect, useRef } from 'react'
 import 'ckeditor5/ckeditor5.css'
 import './CkEditor.scss'
 import MergeFields from './CkEditor.plugin.MergeFields'
+import type { EditorRichTextProps } from '../types'
 
 class ClassicEditorCustom extends ClassicEditor {}
 
@@ -51,33 +53,21 @@ ClassicEditorCustom.builtinPlugins = [
   // TableClassesPlugin
 ];
 
-export const PuckCkEditor: FieldRenderFunctions['textarea'] = (props) => {
+export function PuckCkEditor<TEditor extends Editor = ClassicEditorCustom>(props: EditorRichTextProps & {
+  editor?: CKEditorReact<TEditor>['editor']
+}): ReturnType<FieldRenderFunctions['textarea']> {
   // const cloud = useCKEditorCloud({
   //   version: '32.0.0',
   //   premium: true,
   // })
-  const value = useRef(props.value)
-  const editorInstanceRef = useRef<CKEditorReact<ClassicEditor>>(null)
+  const { value: propsValue, editor, onChange, onBlur, onFocus } = props;
+  const editorInstanceRef = useRef<CKEditorReact<TEditor>>(null)
 
-  // if (cloud.status === 'error') {
-  //   return <div>CK Editor Error! {JSON.stringify(cloud.error)}</div>
-  // }
-
-  // if (cloud.status === 'loading') {
-  //   return <div>Loading...</div>
-  // }
-
-  // const { Heading, ClassicEditor, Essentials, Paragraph, Bold, Italic, FontColor, ImageUtils, ImageEditing, Mention } =
-  //   cloud.CKEditor
-  // const { MergeFields } = cloud.CKEditorPremiumFeatures
-
-  // console.log(MergeFields)e
 
   return (
     <>
-      {props.field.label && <FieldLabel label={props.field.label} />}
-      <CKEditorReact
-        editor={ClassicEditorCustom}
+      <CKEditorReact<TEditor>
+        editor={editor || (ClassicEditorCustom as any)}
         config={{
           licenseKey: '',
           plugins: [
@@ -120,7 +110,7 @@ export const PuckCkEditor: FieldRenderFunctions['textarea'] = (props) => {
             GeneralHtmlSupport,
             Paragraph,
           ],
-          initialData: props.value || '',
+          initialData: propsValue || '',
           toolbar: {
             shouldNotGroupWhenFull: true,
             items:[
@@ -186,7 +176,9 @@ export const PuckCkEditor: FieldRenderFunctions['textarea'] = (props) => {
             tableToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'],
           },
         }}
-        onChange={(event, editor) => props.onChange(editor.getData())}
+        onChange={(event, editor) => onChange(editor.getData())}
+        onFocus={onFocus}
+        onBlur={onBlur}
         ref={(editorInstance) => {
           // editorInstance?.editor?.setData(props.value)
           editorInstanceRef.current = editorInstance

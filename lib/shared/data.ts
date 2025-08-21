@@ -13,3 +13,5 @@ export const dictionary = {
     save: 'simpan',
   },
 }
+
+export type Language = keyof typeof dictionary

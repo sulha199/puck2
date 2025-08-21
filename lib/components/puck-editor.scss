@@ -27,20 +27,19 @@
 
       &__close {
         position: absolute;
-        top: .5em;
-        right: .5em;
+        top: 0.5em;
+        right: 0.5em;
         background-color: #ccc;
 
         font-size: 1.5em;
         line-height: 1em;
 
         border-radius: 50%;
-        border: 1px solid;  
+        border: 1px solid;
 
         width: 1em;
         height: 1em;
         padding: 0px;
-
       }
     }
   }
@@ -77,5 +76,42 @@
 .puck-outlines {
   *[class*='Layer-zones'] {
     display: none !important;
+  }
+}
+
+.component {
+  &__renderer-field {
+    &__textarea {
+      display: inline;
+      &[data-editing] {
+        cursor: text;
+      }
+      > span[contenteditable] {
+        display: inline;
+        white-space: initial;
+      }
+    }
+    &__textarea-popup {
+      display: flex;
+      &__button {
+        z-index: 9999999999999999999;
+        padding: 1em;
+      }
+      &__alert::after {
+        position: absolute;
+        right: 0px;
+        transform: translateY(50%) translateX(-50%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        content: "!";
+        width: 1em;
+        height: 1em;
+        line-height: 1em;
+        background-color: red;
+        color: white;
+        border-radius: 50%;
+      }
+    }
   }
 }

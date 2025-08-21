@@ -1,11 +1,11 @@
-import { createUsePuck, Puck, useGetPuck, type Field, type FieldProps, type FieldRenderFunctions } from '@measured/puck'
+import { FieldLabel, Puck, useGetPuck, type FieldProps, type FieldRenderFunctions } from '@measured/puck'
 import { config } from 'puck.config'
 // import { useLoaderData, useFetcher } from 'react-router'
 // // import type { loader } from '~/routes/_index'
 // import type { action } from '~/routes/puck-splat'
 import editorStyles from '@measured/puck/puck.css?url'
 import { PuckCkEditor } from './EditorRichText/CkEditor/CkEditor'
-import { useEffect, useRef, useState, type FC, type PropsWithChildren, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type PropsWithChildren } from 'react'
 import { loadStorage, saveStorage } from '~/routes/_index'
 import './puck-editor.scss'
 
@@ -43,6 +43,7 @@ export function PuckEditor() {
           fieldTypes: {
             textarea: (props) => (
               <FieldTypeContainer {...props}>
+                {props.field.label && <FieldLabel label={props.field.label} />}
                 <PuckCkEditor {...props} />{' '}
               </FieldTypeContainer>
             ),
@@ -65,7 +66,7 @@ export function PuckEditor() {
             select: FieldTypeContainer,
             slot: FieldTypeContainer,
           } satisfies FieldRenderFunctions,
-          components: (props) => {
+          drawer: (props) => {
             const { children } = props
 
             if (Array.isArray(children)) {
@@ -75,10 +76,9 @@ export function PuckEditor() {
           },         
           fields: (props) => {
             const { children } = props
-            const usePuck = createUsePuck()
+            const getPuck = useGetPuck()
 
-            const puckStore = usePuck((s) => s)
-            const selectedItem = puckStore?.selectedItem
+            const { selectedItem } = getPuck()
             const type = selectedItem?.type || 'Nothing'
 
             const className = `puck-fields`
@@ -98,7 +98,12 @@ export function PuckEditor() {
             }
 
             const shouldDisplayPopup = type === 'RendererTextArea' || type === 'HtmlImage'
+            // const shouldDisplayPopup = false
             const popupClassname = shouldDisplayPopup ? `${className}--popup-element` : ''
+
+            useEffect(() => {
+              console.log('puckHistory', getPuck().selectedItem)
+            }, [getPuck().selectedItem]);
 
             return (
               <div className={`${className} ${classNameWithType} ${popupClassname}`}>
@@ -131,8 +136,6 @@ export function PuckEditor() {
             return <div className='dsdsdsdsdsd'>{children}</div>
           },
           outline: ({ children }) => {
-            const usePuck = createUsePuck()
-            const puckStore = usePuck((s) => s)
 
             return <div className='puck-outlines'>{children}</div>
           },

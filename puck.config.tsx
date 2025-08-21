@@ -1,15 +1,24 @@
-import { FieldLabel, type ArrayField, type ComponentConfig, type Config, type CustomField, type Field, type Slot } from '@measured/puck'
+import {
+  FieldLabel,
+  type ArrayField,
+  type ComponentConfig,
+  type Config,
+  type CustomField,
+  type Field,
+  type Slot,
+} from '@measured/puck'
 import { EmailSectionContainer, EmailSectionTwoColumn } from 'lib/components/Commons/EmailSectionContainer'
-import { RendererTextAreaAttr, type RendererTextAreaAttrProps } from 'lib/components/RendererField/RendererTextArea'
+import { RendererTextArea, type RendererTextAreaAttrProps } from 'lib/components/RendererField/RendererTextArea'
+import type { Language } from 'lib/shared/data'
 import type { FC } from 'react'
 
 type CssSelection = Array<string>
 
 type Props = {
-  EmailHeader: { version: number; children: Slot, css: CssSelection }
-  EmailFooter: { version: number; content: Slot, css: CssSelection }
-  EmailTwoColumnText: { version: number; col1: Slot; col2: Slot, type: 'type-1' | 'type-2', css: CssSelection }
-  HtmlImage: { src: string;}
+  EmailHeader: { version: number; children: Slot; css: CssSelection }
+  EmailFooter: { version: number; content: Slot; css: CssSelection }
+  EmailTwoColumnText: { version: number; col1: Slot; col2: Slot; type: 'type-1' | 'type-2'; css: CssSelection }
+  HtmlImage: { src: string }
   RendererTextArea: RendererTextAreaAttrProps
   // HtmlSection: { children: Slot; version: number }
 }
@@ -25,6 +34,12 @@ const COMPONENTS_LATEST_VERSION_MAP = {
   // HtmlSection: 1,
 } as const satisfies Record<ComponentName, number>
 
+export const getLanguageMap = () => {
+  return {
+    en_us: { type: 'textarea', label: 'en_us', contentEditable: true },
+    id_id: { type: 'textarea', label: 'id_id', contentEditable: true },
+  }  as const satisfies Record<Language, Field<string>>
+}
 
 const COMPONENTS_DATA_MAP = {
   EmailHeader: {
@@ -38,41 +53,41 @@ const COMPONENTS_DATA_MAP = {
     css: [],
   },
   EmailFooter: {
-        version: COMPONENTS_LATEST_VERSION_MAP.EmailFooter,
-        content: [
-          {
-            type: 'RendererTextArea',
-            props: {
-              content: 'Street | City | Country | Phone | Email'
-            },
-          }
-        ],
-        css: [],
+    version: COMPONENTS_LATEST_VERSION_MAP.EmailFooter,
+    content: [
+      {
+        type: 'RendererTextArea',
+        props: {
+          content: 'Street | City | Country | Phone | Email',
+        },
+      },
+    ],
+    css: [],
   },
   HtmlImage: {
-        src: 'https://3.0.devk8s.azavista.com/assets/img/logo-placeholder.png',
-      },
+    src: 'https://3.0.devk8s.azavista.com/assets/img/logo-placeholder.png',
+  },
   EmailTwoColumnText: {
-        version: COMPONENTS_LATEST_VERSION_MAP.EmailTwoColumnText,
-        col1: [
-          {
-            type: 'RendererTextArea',
-            props: {
-              content: `This is a column in a two column text section. Content related to the event can be added here.`,
-            },
-          },
-        ],
-        col2: [
-          {
-            type: 'RendererTextArea',
-            props: {
-              content: `This is a column in a two column text section. Content related to the event can be added here.`,
-            },
-          },
-        ],
-        type: 'type-2',
-        css: [],
+    version: COMPONENTS_LATEST_VERSION_MAP.EmailTwoColumnText,
+    col1: [
+      {
+        type: 'RendererTextArea',
+        props: {
+          content: `This is a column in a two column text section. Content related to the event can be added here.`,
+        },
       },
+    ],
+    col2: [
+      {
+        type: 'RendererTextArea',
+        props: {
+          content: `This is a column in a two column text section. Content related to the event can be added here.`,
+        },
+      },
+    ],
+    type: 'type-2',
+    css: [],
+  },
   RendererTextArea: {
     content: 'Edit text',
     useTranslation: 0,
@@ -81,7 +96,7 @@ const COMPONENTS_DATA_MAP = {
       id_id: '',
     },
   },
-} as const satisfies {[componentName in ComponentName]: Props[componentName]}
+} as const satisfies { [componentName in ComponentName]: Props[componentName] }
 
 // export const config: Config<Props> = {
 //   components: {
@@ -112,52 +127,61 @@ const getConfigFieldVersion = <T extends ComponentName>(componentName: T) => {
 }
 
 const getConfigFieldCss = <T extends ComponentName>(componentName: T) => {
-  const styleNames = [
-    'style1', 'style2', 'style3'
-  ]  
+  const styleNames = ['style1', 'style2', 'style3']
   const label = 'CSS'
-  return {    
+  return {
     label,
-    type: "custom",
-    render: ({ name, onChange, value, field, id}) => {
-      const getCheckboxId = (value: string) => `${componentName}__${id}__css__option--${value}`;
+    type: 'custom',
+    render: ({ name, onChange, value, field, id }) => {
+      const getCheckboxId = (value: string) => `${componentName}__${id}__css__option--${value}`
       const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const options = event.target.options;
-        const values = [];
+        const options = event.target.options
+        const values = []
         for (let i = 0; i < options.length; i++) {
           if (options[i].selected) {
-            values.push(options[i].value);
+            values.push(options[i].value)
           }
         }
-        onChange(values);
-      };
+        onChange(values)
+      }
       const onCheckChange = (e: React.ChangeEvent<HTMLInputElement>, styleName: string) => {
-        const styleNameIndex = value?.indexOf(styleName);
-        const isStyleNameExist = styleNameIndex >= 0;
+        const styleNameIndex = value?.indexOf(styleName)
+        const isStyleNameExist = styleNameIndex >= 0
         if (e.target.checked) {
           if (!isStyleNameExist) {
-            onChange(value.concat([styleName]));
+            onChange(value.concat([styleName]))
           }
         } else {
           if (isStyleNameExist) {
-            onChange(value.filter(v => v != styleName));
+            onChange(value.filter((v) => v != styleName))
           }
         }
       }
-      return <>
-        <FieldLabel label={label}/>
-        <div className="bg-light">
-          {styleNames.map(name => {
-            const id = getCheckboxId(name);
-            return <div className="form-check" key={id}>
-              <input className="form-check-input" type="checkbox" value={name} id={id} checked={value?.includes(name)} onChange={e => onCheckChange(e, name)}/>
-              <label className="form-check-label" htmlFor={id}>
-                {name}
-              </label>
-            </div>
-          })}      
-        </div>  
-      </>
+      return (
+        <>
+          <FieldLabel label={label} />
+          <div className='bg-light'>
+            {styleNames.map((name) => {
+              const id = getCheckboxId(name)
+              return (
+                <div className='form-check' key={id}>
+                  <input
+                    className='form-check-input'
+                    type='checkbox'
+                    value={name}
+                    id={id}
+                    checked={value?.includes(name)}
+                    onChange={(e) => onCheckChange(e, name)}
+                  />
+                  <label className='form-check-label' htmlFor={id}>
+                    {name}
+                  </label>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )
     },
   } as const satisfies Field<string[]>
 }
@@ -193,10 +217,19 @@ const PuckConfigEmailHeader = {
       {version === 2 && <div className='container-lg'>{children()}</div>}
     </>
   ),
-} satisfies Omit<ComponentConfig<Props['EmailHeader'], Props['EmailHeader']>, 'type'>
+} satisfies Omit<
+  ComponentConfig<{
+    props: Props['EmailHeader']
+  }>,
+  'type'
+>
 
-
-export const config: Config<Props> = {
+export const config: Config<{
+  components: Props
+  categories: ['section', 'foundational']
+  root: {}
+  fields: {}
+}> = {
   components: {
     EmailHeader: PuckConfigEmailHeader,
     EmailFooter: {
@@ -263,14 +296,14 @@ export const config: Config<Props> = {
           options: [
             {
               label: 'Type 1',
-              value: 'type-1'
+              value: 'type-1',
             },
             {
               label: 'Type 2',
-              value: 'type-2'
-            }
-          ]
-        }
+              value: 'type-2',
+            },
+          ],
+        },
       },
       defaultProps: COMPONENTS_DATA_MAP.EmailTwoColumnText,
     },
@@ -280,9 +313,9 @@ export const config: Config<Props> = {
         src: { type: 'text' },
       },
       render: (params) => {
-        const { src } = {...COMPONENTS_DATA_MAP.HtmlImage, ...params}
+        const { src } = { ...COMPONENTS_DATA_MAP.HtmlImage, ...params }
         return <img src={src} />
-    },
+      },
       defaultProps: COMPONENTS_DATA_MAP.HtmlImage,
     },
     RendererTextArea: {
@@ -294,29 +327,27 @@ export const config: Config<Props> = {
           options: [
             {
               value: 0,
-              label: 'no'
+              label: 'no',
             },
             {
               value: 1,
-              label: 'yes'
+              label: 'yes',
             },
-          ]
+          ],
         },
         content: {
           type: 'textarea',
           label: 'Universal Content',
+          contentEditable: true,
         },
         contentTranslations: {
           type: 'object',
           label: 'Language Translations',
-          objectFields: {         
-            en_us: { type: "textarea", label: 'en_us'},
-            id_id: { type: "textarea", label: 'id_id' },   
-          }, 
-        }
+          objectFields: getLanguageMap(),
+        },
       },
       defaultProps: COMPONENTS_DATA_MAP.RendererTextArea,
-      render: (props) => <div {...RendererTextAreaAttr(props)} />,
+      render: (props) => RendererTextArea(props),
     },
   },
   categories: {
@@ -331,3 +362,4 @@ export const config: Config<Props> = {
     },
   },
 }
+
