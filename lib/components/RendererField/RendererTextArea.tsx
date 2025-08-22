@@ -134,7 +134,7 @@ export const RendererTextArea = (props: RendererTextAreaAttrProps) => {
         }
       }
     : undefined
-  const setTextValueDebounced = setTextValue && useDebounceCallback(setTextValue, 2000);
+  const setTextValueDebounced = setTextValue && useDebounceCallback(setTextValue, 1500);
 
   const isContentLanguageSet = useMemo(() => {
     const languages = Object.keys(dictionary) as Language[]
