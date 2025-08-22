@@ -47,6 +47,7 @@ import './CkEditor.scss'
 import MergeFields from './CkEditor.plugin.MergeFields'
 import type { EditorRichTextProps } from '../types'
 import { useDebounceValue } from 'usehooks-ts'
+import { RENDERER_TEXTAREA_RESYNC_EDITOR_VALUE_DEBOUNCE } from 'lib/shared/const'
 
 class ClassicEditorCustom extends ClassicEditor {}
 
@@ -60,10 +61,10 @@ export function PuckCkEditor<TEditor extends Editor = ClassicEditorCustom>(props
   
   const editorInstanceRef = useRef<CKEditorReact<TEditor>>(null)
   const { value: propsValue, editor, onChange, onBlur, onFocus } = props;
-  const [propsValueDebounced] = useDebounceValue(propsValue as string, 1000)
+  const [propsValueDebounced] = useDebounceValue(propsValue as string, RENDERER_TEXTAREA_RESYNC_EDITOR_VALUE_DEBOUNCE)
 
   useEffect(() => {    
-    if (editorInstanceRef.current?.editor?.getData().trim() !== propsValueDebounced.trim()) {
+    if (editorInstanceRef.current?.editor?.getData().trim() !== propsValueDebounced?.trim()) {
       editorInstanceRef.current?.editor?.setData(propsValue || '')
     }    
   }, [propsValueDebounced])
