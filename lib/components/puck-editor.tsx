@@ -1,5 +1,5 @@
 import { FieldLabel, Puck, useGetPuck, type FieldProps, type FieldRenderFunctions } from '@measured/puck'
-import { config } from 'puck.config'
+import { PUCK_CONFIG } from 'puck.config'
 // import { useLoaderData, useFetcher } from 'react-router'
 // // import type { loader } from '~/routes/_index'
 // import type { action } from '~/routes/puck-splat'
@@ -34,7 +34,7 @@ export function PuckEditor() {
     <>
       <link rel='stylesheet' href={editorStyles} id='puck-css' />
       <Puck
-        config={config}
+        config={PUCK_CONFIG}
         data={data}
         ui={{
           previewMode: isReadOnly ? 'interactive' : 'edit',

@@ -17,7 +17,8 @@
     "isbot": "^5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router": "^7.5.3"
+    "react-router": "^7.5.3",
+    "usehooks-ts": "^3.1.1"
   },
   "devDependencies": {
     "@ckeditor/ckeditor5-react": "9.0",

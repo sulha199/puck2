@@ -1,8 +1,8 @@
 import type { Data } from "@measured/puck";
 import { Render } from "@measured/puck";
 
-import { config } from "../../puck.config";
+import { PUCK_CONFIG } from "../../puck.config";
 
 export function PuckRender({ data }: { data: Data }) {
-  return <Render config={config} data={data} />;
+  return <Render config={PUCK_CONFIG} data={data} />;
 }

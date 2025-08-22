@@ -224,7 +224,7 @@ const PuckConfigEmailHeader = {
   'type'
 >
 
-export const config: Config<{
+export const PUCK_CONFIG: Config<{
   components: Props
   categories: ['section', 'foundational']
   root: {}

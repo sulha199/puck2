@@ -46,6 +46,7 @@ import 'ckeditor5/ckeditor5.css'
 import './CkEditor.scss'
 import MergeFields from './CkEditor.plugin.MergeFields'
 import type { EditorRichTextProps } from '../types'
+import { useDebounceValue } from 'usehooks-ts'
 
 class ClassicEditorCustom extends ClassicEditor {}
 
@@ -56,13 +57,16 @@ ClassicEditorCustom.builtinPlugins = [
 export function PuckCkEditor<TEditor extends Editor = ClassicEditorCustom>(props: EditorRichTextProps & {
   editor?: CKEditorReact<TEditor>['editor']
 }): ReturnType<FieldRenderFunctions['textarea']> {
-  // const cloud = useCKEditorCloud({
-  //   version: '32.0.0',
-  //   premium: true,
-  // })
-  const { value: propsValue, editor, onChange, onBlur, onFocus } = props;
+  
   const editorInstanceRef = useRef<CKEditorReact<TEditor>>(null)
+  const { value: propsValue, editor, onChange, onBlur, onFocus } = props;
+  const [propsValueDebounced] = useDebounceValue(propsValue as string, 1000)
 
+  useEffect(() => {    
+    if (editorInstanceRef.current?.editor?.getData().trim() !== propsValueDebounced.trim()) {
+      editorInstanceRef.current?.editor?.setData(propsValue || '')
+    }    
+  }, [propsValueDebounced])
 
   return (
     <>

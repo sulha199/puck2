@@ -3,13 +3,16 @@ import {
   useGetPuck,
   walkTree,
   type FieldTransformFnParams,
+  type PuckApi,
   type TextareaField,
 } from '@measured/puck'
 import { dictionary, participant, type Language } from 'lib/shared/data'
 import { useEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactElement } from 'react'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
 import { InlineEditor } from 'ckeditor5'
-import { delayFn, getPuckIframe, getPuckIframeDocument } from 'lib/shared/utils'
+import { delayFn, getPuckIframeDocument } from 'lib/shared/utils'
+import type { PUCK_CONFIG } from 'puck.config'
+import { useDebounceCallback } from 'usehooks-ts'
 
 export type RendererTextAreaAttrProps = {
   content: string
@@ -21,7 +24,7 @@ export type RendererTextAreaAttrProps = {
 
 const useGetPuckAnyWhere = () => {
   try {
-    return useGetPuck()
+    return useGetPuck() as any as () => PuckApi<typeof PUCK_CONFIG>
   } catch (e) {
     return null
   }
@@ -35,6 +38,7 @@ export const RendererTextArea = (props: RendererTextAreaAttrProps) => {
 
   const isPuckEditing = !!getPuck
   const params = new URL(document.location.toString()).searchParams
+  const propsId = (props as any).id as string
   const lang: Language = (params.get('lang') as Language) || 'en_us'
   const fieldType = 'textarea'
   const { content, useTranslation, contentTranslations } = props
@@ -81,10 +85,10 @@ export const RendererTextArea = (props: RendererTextAreaAttrProps) => {
   const setTextValue = isPuckEditing
     ? (value: string) => {
         if (getPuck) {
-          const { appState, config, dispatch } = getPuck()
+          const { appState, config, dispatch, getSelectorForId } = getPuck()
           const newContent = walkTree(appState.data, config, (content) =>
             content.map((child) => {
-              if (child.props.id === (props as any).id) {
+              if (child.props.id === propsId) {
                 const newData = { ...child }
                 if (useTranslation) {
                   newData.props.contentTranslations[lang] = value
@@ -101,9 +105,36 @@ export const RendererTextArea = (props: RendererTextAreaAttrProps) => {
             type: 'setData',
             data: newContent,
           })
+
+
+          // if (propsId) {
+          //   const newPropsData = {
+          //     ...props,
+          //     id: propsId,
+          //   }
+          //   if (useTranslation) {
+          //     newPropsData.contentTranslations[lang] = value
+          //   } else {
+          //     newPropsData.content = value
+          //   }
+
+          //   const { index, zone } = getSelectorForId(propsId) || {}
+          //   if (index != undefined && zone != undefined) {
+          //     dispatch({
+          //       type: 'replace',
+          //       destinationIndex: index,
+          //       destinationZone: zone,
+          //       data: {
+          //         type: 'RendererTextArea',
+          //         props: newPropsData,
+          //       },
+          //     })
+          //   }
+          // }
         }
       }
     : undefined
+  const setTextValueDebounced = setTextValue && useDebounceCallback(setTextValue, 2000);
 
   const isContentLanguageSet = useMemo(() => {
     const languages = Object.keys(dictionary) as Language[]
@@ -150,18 +181,18 @@ export const RendererTextArea = (props: RendererTextAreaAttrProps) => {
     if (!isPuckEditing) {
       return undefined
     }
-    return isPuckEditing && setTextValue ? (
+    return isPuckEditing && setTextValueDebounced ? (
       <>
         <PuckCkEditor
           editor={InlineEditor as any}
-          onChange={setTextValue}
+          onChange={setTextValueDebounced}
           value={selectedContent}
           onFocus={() => setIsFocussed(true)}
           onBlur={() => setIsFocussed(false)}
         />
       </>
     ) : undefined
-  }, [setTextValue, isPuckEditing])
+  }, [setTextValueDebounced, isPuckEditing, selectedContent, isFocussed])
 
   // Register the overlay portal for the textarea component
   const divRef = useRef<HTMLDivElement>(null)
@@ -189,4 +220,3 @@ export const RendererTextArea = (props: RendererTextAreaAttrProps) => {
     </>
   )
 }
-
