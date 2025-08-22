@@ -1,13 +1,10 @@
 import {
   useGetPuck,
-  walkTree,
   type ComponentDataMap,
   type ExtractConfigParams,
   type PuckApi,
-  type WithId,
 } from '@measured/puck'
 import type { PuckConfig } from 'puck.config'
-import type { RendererTextAreaAttrProps } from './RendererField/RendererTextArea'
 
 export type GetPuckFn = () => PuckApi<PuckConfig>
 

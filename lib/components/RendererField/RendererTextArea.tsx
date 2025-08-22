@@ -1,4 +1,4 @@
-import { registerOverlayPortal, walkTree, type FieldTransformFnParams, type TextareaField } from '@measured/puck'
+import { registerOverlayPortal, type FieldTransformFnParams, type TextareaField } from '@measured/puck'
 import { dictionary, type Language } from 'lib/shared/data'
 import { useMemo, useState, type FC, type HTMLAttributes, type PropsWithChildren, type ReactElement } from 'react'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'

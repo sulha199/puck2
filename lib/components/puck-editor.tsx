@@ -1,15 +1,11 @@
 import { FieldLabel, Puck, useGetPuck, type FieldProps, type FieldRenderFunctions } from '@measured/puck'
 import { PUCK_CONFIG } from 'puck.config'
-// import { useLoaderData, useFetcher } from 'react-router'
-// // import type { loader } from '~/routes/_index'
-// import type { action } from '~/routes/puck-splat'
 import editorStyles from '@measured/puck/puck.css?url'
 import { PuckCkEditor } from './EditorRichText/CkEditor/CkEditor'
 import { useEffect, useRef, useState, type PropsWithChildren } from 'react'
 import { loadStorage, saveStorage } from '~/routes/_index'
 import './puck-editor.scss'
 import { getPuckComponentName, selectParentComponent, type GetPuckFn } from './puck-editor.util'
-import { PuckEditorOutlines } from './puck-editor.outlines'
 import { delayFn } from 'lib/shared/utils'
 import { useTimeout } from 'usehooks-ts'
 
@@ -38,18 +34,19 @@ export function PuckEditor() {
   const outlinesDivRef = useRef<HTMLDivElement>(null)
   const getPuckFnRef = useRef<GetPuckFn>(null)
   const updateOutline = (getPuck: GetPuckFn) => {
-    const attrName = 'data-puck-outline-component-id'
+    const attrComponentId = 'data-puck-outline-component-id'
+    const attrComponentType = 'data-puck-outline-component-type'
     const {
       appState: {
         data: { content },
-        ui,
       },
-      selectedItem,
     } = getPuck()
     const outlineItemEls = Array.from(outlinesDivRef.current?.querySelectorAll<HTMLLIElement>(':scope > ul > li') || [])
     outlineItemEls.forEach((el, index) => {
-      const propsId = content?.[index].props.id || ''
-      el.setAttribute(attrName, propsId)
+      const component = content?.[index]
+      const propsId = component.props.id || ''
+      el.setAttribute(attrComponentId, propsId)
+      el.setAttribute(attrComponentType, component.type)
 
       const componentName = getPuckComponentName(propsId, getPuck)
       if (componentName) {
@@ -76,7 +73,7 @@ export function PuckEditor() {
               </FieldTypeContainer>
             ),
             text: (props) => {
-              const { children, id, name } = props
+              const { id, name } = props
               const isImageInput = name === 'src' && id?.startsWith('HtmlImage-')
 
               if (isImageInput) {
@@ -111,7 +108,7 @@ export function PuckEditor() {
             const { children } = props
             const getPuck = useGetPuck() as any as GetPuckFn
 
-            const { selectedItem, appState, dispatch, getSelectorForId, getItemBySelector } = getPuck()
+            const { selectedItem } = getPuck()
             const type = selectedItem?.type || 'Nothing'
 
             const className = `puck-fields`
@@ -164,7 +161,7 @@ export function PuckEditor() {
             getPuckFnRef.current = getPuck
             useTimeout(() => {
               updateOutline(getPuck)
-            }, 500)
+            }, 0)
             return (
               <div className='puck-outlines' ref={outlinesDivRef}>
                 {children}
