@@ -3,3 +3,8 @@
     padding: 0px;
   }
 }
+
+.ck.ck-balloon-panel.ck.ck-balloon-panel.ck-balloon-panel_visible {
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
