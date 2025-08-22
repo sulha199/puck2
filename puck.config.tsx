@@ -1,9 +1,7 @@
 import {
   FieldLabel,
-  type ArrayField,
   type ComponentConfig,
   type Config,
-  type CustomField,
   type Field,
   type Slot,
 } from '@measured/puck'
@@ -15,10 +13,10 @@ import type { FC } from 'react'
 type CssSelection = Array<string>
 
 type Props = {
-  EmailHeader: { version: number; children: Slot; css: CssSelection }
-  EmailFooter: { version: number; content: Slot; css: CssSelection }
-  EmailTwoColumnText: { version: number; col1: Slot; col2: Slot; type: 'type-1' | 'type-2'; css: CssSelection }
-  HtmlImage: { src: string }
+  EmailHeader: { version: number; children: Slot; css: CssSelection, name?: string }
+  EmailFooter: { version: number; content: Slot; css: CssSelection, name?: string }
+  EmailTwoColumnText: { version: number; col1: Slot; col2: Slot; type: 'type-1' | 'type-2'; css: CssSelection, name?: string }
+  HtmlImage: { src: string, name?: string }
   RendererTextArea: RendererTextAreaAttrProps
   // HtmlSection: { children: Slot; version: number }
 }
@@ -89,7 +87,7 @@ const COMPONENTS_DATA_MAP = {
     css: [],
   },
   RendererTextArea: {
-    content: 'Edit text',
+    content: '',
     useTranslation: 0,
     contentTranslations: {
       en_us: '',
@@ -192,6 +190,7 @@ const HtmlImage: FC<Props['HtmlImage']> = ({ src }) => {
 
 const PuckConfigEmailHeader = {
   fields: {
+    name: {type: 'text'},
     version: getConfigFieldVersion('EmailHeader'),
     css: getConfigFieldCss('EmailHeader'),
     children: { type: 'slot' },
@@ -234,6 +233,7 @@ export const PUCK_CONFIG: Config<{
     EmailHeader: PuckConfigEmailHeader,
     EmailFooter: {
       fields: {
+        name: {type: 'text'},
         version: getConfigFieldVersion('EmailFooter'),
         css: getConfigFieldCss('EmailFooter'),
         content: {
@@ -280,6 +280,7 @@ export const PUCK_CONFIG: Config<{
         )
       },
       fields: {
+        name: {type: 'text'},
         version: getConfigFieldVersion('EmailTwoColumnText'),
         css: getConfigFieldCss('EmailTwoColumnText'),
         col1: {
@@ -363,3 +364,4 @@ export const PUCK_CONFIG: Config<{
   },
 }
 
+export type PuckConfig = typeof PUCK_CONFIG;

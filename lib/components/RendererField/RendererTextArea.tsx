@@ -1,19 +1,12 @@
-import {
-  registerOverlayPortal,
-  useGetPuck,
-  walkTree,
-  type FieldTransformFnParams,
-  type PuckApi,
-  type TextareaField,
-} from '@measured/puck'
+import { registerOverlayPortal, walkTree, type FieldTransformFnParams, type TextareaField } from '@measured/puck'
 import { dictionary, type Language } from 'lib/shared/data'
 import { useMemo, useState, type FC, type HTMLAttributes, type PropsWithChildren, type ReactElement } from 'react'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
 import { InlineEditor } from 'ckeditor5'
-import type { PUCK_CONFIG } from 'puck.config'
 import { useDebounceCallback, useDebounceValue } from 'usehooks-ts'
 import { getReplacedContentWithMergeTags } from './RendererTextArea.utils'
 import { RENDERER_TEXTAREA_SAVE_TEXT_DEBOUNCE } from 'lib/shared/const'
+import { updateComponentData, useGetPuckAnyWhere } from '../puck-editor.util'
 
 export type RendererTextAreaAttrProps = {
   content: string
@@ -21,6 +14,7 @@ export type RendererTextAreaAttrProps = {
   contentTranslations: {
     [lang in Language]: string
   }
+  name?: string
 }
 
 export type RendererTextAreaInternalProps = {
@@ -28,14 +22,6 @@ export type RendererTextAreaInternalProps = {
   lang: Language
   selectedContent: string
   params: URLSearchParams
-}
-
-const useGetPuckAnyWhere = () => {
-  try {
-    return useGetPuck() as any as () => PuckApi<typeof PUCK_CONFIG>
-  } catch (e) {
-    return null
-  }
 }
 
 export const RendererTextArea = (props: RendererTextAreaAttrProps) => {
@@ -115,52 +101,23 @@ export const RendererTextAreaDivEditor = (props: RendererTextAreaAttrProps & Ren
   const propsId = (props as any).id as string
   const setTextValue = getPuck
     ? (value: string) => {
-        if (getPuck) {
-          const { appState, config, dispatch } = getPuck()
-          const newContent = walkTree(appState.data, config, (content) =>
-            content.map((child) => {
-              if (child.props.id === propsId) {
-                const newData = { ...child }
-                if (useTranslation) {
-                  newData.props.contentTranslations[lang] = value
-                } else {
-                  newData.props.content = value
+        if (propsId && getPuck().selectedItem?.props.id !== propsId) {
+          updateComponentData(
+            propsId,
+            'RendererTextArea',
+            (prev) => {
+              if (prev.useTranslation) {                
+                prev.contentTranslations = {
+                  ...prev.contentTranslations,
+                  [lang]: value
                 }
-                return newData
               } else {
-                return child
+                prev.content = value
               }
-            })
+              return prev
+            },
+            getPuck
           )
-          dispatch({
-            type: 'setData',
-            data: newContent,
-          })
-
-          // if (propsId) {
-          //   const newPropsData = {
-          //     ...props,
-          //     id: propsId,
-          //   }
-          //   if (useTranslation) {
-          //     newPropsData.contentTranslations[lang] = value
-          //   } else {
-          //     newPropsData.content = value
-          //   }
-
-          //   const { index, zone } = getSelectorForId(propsId) || {}
-          //   if (index != undefined && zone != undefined) {
-          //     dispatch({
-          //       type: 'replace',
-          //       destinationIndex: index,
-          //       destinationZone: zone,
-          //       data: {
-          //         type: 'RendererTextArea',
-          //         props: newPropsData,
-          //       },
-          //     })
-          //   }
-          // }
         }
       }
     : undefined
@@ -175,9 +132,7 @@ export const RendererTextAreaDivEditor = (props: RendererTextAreaAttrProps & Ren
       <div className='component__renderer-field__textarea-popup'>
         {!isContentLanguageSet && <span className='component__renderer-field__textarea-popup__alert'></span>}
         {isShowPopupButton && (
-          <button className='component__renderer-field__textarea-popup__button'>
-            Edit Translations
-          </button>
+          <button className='component__renderer-field__textarea-popup__button'>Edit Translations</button>
         )}
       </div>
     )
