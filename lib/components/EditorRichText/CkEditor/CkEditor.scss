@@ -8,3 +8,8 @@
   left: 50% !important;
   transform: translateX(-50%) !important;
 }
+
+.ck.ck-dropdown > .ck-dropdown__panel > .ck-list {
+  max-height: 30vh;
+  overflow-y: auto;
+}
