@@ -100,6 +100,7 @@ export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
           }
         }}
         assets={DUMMY_ASSETS}
+        assetsDefaultBaseUrl='https://devk8s.azavista.com'
         metadata={metadata}
         onPublish={data => saveStorage(data)}
         ></PuckEditor>

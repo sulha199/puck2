@@ -1,4 +1,3 @@
-
 /**@deprecated */
 export const getPuckIframe = (): HTMLIFrameElement | null => {
   return document.querySelector<HTMLIFrameElement>('#preview-frame');
@@ -25,4 +24,18 @@ export function mapRecordProperty<T extends Record<string, any>, P extends keyof
     }),
     {}
   ) as any
+}
+
+/**
+ * 
+ * @param url full URL or relative-path
+ * @param baseUrl base-url to add if the `url` misses the base-url
+ * @returns 
+ */
+export const createUrl = (url: string, baseUrl: string | undefined): string => {
+  try {
+    return (new URL(url)).href
+  } catch (e) {
+    return (new URL(url, baseUrl)).href
+  }
 }

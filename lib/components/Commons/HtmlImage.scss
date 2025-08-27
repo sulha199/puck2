@@ -1,0 +1,16 @@
+.image-file-selection {
+  &__list {
+    max-height: calc(100vh - 100px);
+    overflow: auto;
+    &__item {
+      cursor: pointer;
+      &__box {
+        width: 200px;
+        max-width: 200px;
+      }
+      &__name {
+        word-break: break-all;
+      }
+    }
+  }
+}

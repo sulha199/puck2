@@ -1,31 +1,65 @@
-import { Puck, FieldLabel, type FieldRenderFunctions, useGetPuck, type FieldProps, type Data, type DefaultComponents, type DefaultComponentProps, type DefaultRootFieldProps, type OnAction } from '@measured/puck'
+import {
+  Puck,
+  FieldLabel,
+  type FieldRenderFunctions,
+  useGetPuck,
+  type FieldProps,
+  type Data,
+  type DefaultComponents,
+  type DefaultComponentProps,
+  type DefaultRootFieldProps,
+  type OnAction,
+} from '@measured/puck'
 import editorStyles from '@measured/puck/puck.css?url'
 import { delayFn } from 'lib/shared/utils'
 import { useState, useRef, useEffect, useMemo, type FC, type ReactNode, type JSX } from 'react'
 import { useTimeout } from 'usehooks-ts'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
-import { FieldTypeContainer } from './PuckEditor.ui.util'
-import { type GetPuckFn, getPuckComponentNameToRender, getUIEditorPuckConfig, selectParentComponent } from './PuckEditor.util'
-import { type AzavistaPuckMainComponent, type AzavistaPuckComponent, type PuckEditorProps, type PuckEditorMetadata } from './type'
+import { FieldTypeContainer, type FieldTypeContainerAdditionalProps } from './PuckEditor.ui.util'
+import {
+  type GetPuckFn,
+  getPuckComponentNameToRender,
+  getUIEditorPuckConfig,
+  selectParentComponent,
+} from './PuckEditor.util'
+import {
+  type AzavistaPuckMainComponent,
+  type AzavistaPuckComponent,
+  type PuckEditorProps,
+  type PuckEditorMetadata,
+} from './type'
 import './PuckEditor.scss'
 import type { Asset } from 'lib/shared/types'
 
 export type PuckEditorEditorProps = {
   assets: Asset[]
+  assetsDefaultBaseUrl: string;
   onPublish: (data: Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>) => void
   onAction?: OnAction<Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>>
   isDebug: boolean
 }
 
-export type PuckEditorEditorMetadataProps<Props extends {}> = PuckEditorMetadata<Props> & Pick<PuckEditorEditorProps, 'assets'>
+export type PuckEditorEditorMetadataProps<Props extends {} = {}> = PuckEditorMetadata<Props> &
+  Pick<PuckEditorEditorProps, 'assets' | 'assetsDefaultBaseUrl'>
 
 export function PuckEditor<
   MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
   ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
   CategoryName extends string,
-  Metadata extends PuckEditorMetadata<{}>
+  Metadata extends PuckEditorMetadata<{}>,
 >(props: PuckEditorProps<MainComponentMap, ChildComponentMap, CategoryName, Metadata> & PuckEditorEditorProps) {
-  const { childComponentMap, contentData, mainComponentMap, styleUrls, categories, onPublish, isDebug, metadata, assets } = props
+  const {
+    childComponentMap,
+    contentData,
+    mainComponentMap,
+    styleUrls,
+    categories,
+    onPublish,
+    isDebug,
+    metadata,
+    assets,
+    assetsDefaultBaseUrl
+  } = props
 
   const allComponents = useMemo(
     () => ({
@@ -38,7 +72,7 @@ export function PuckEditor<
   const puckConfig = useMemo(() => getUIEditorPuckConfig(props), [mainComponentMap, childComponentMap, categories])
 
   // type PuckConfig = typeof puckConfig;
-  type PuckConfig = any;
+  type PuckConfig = any
 
   const [isReadOnly, setIsReadOnly] = useState(false)
   const iframeRef = useRef<Document>(null)
@@ -66,28 +100,35 @@ export function PuckEditor<
     })
   }
 
-  function commonFieldRenderer<
+  const editorMetadata = {
+    ...metadata,
+    assets,
+    assetsDefaultBaseUrl
+  } as PuckEditorEditorMetadataProps<{}>
+
+  function CommonFieldRenderer<
     T extends string,
     FieldType extends {
       type: T
     },
-    Props extends FieldProps<FieldType, any> & {
-      name: string
-    } & {
-      children?: ReactNode | undefined
-    },
-  >(props: Props, DefaultRenderer: FC<Props> = FieldTypeContainer): JSX.Element {
-    const { id, name } = props
+    Props extends FieldProps<FieldType, any> &
+      FieldTypeContainerAdditionalProps & {
+        children?: ReactNode | undefined
+        DefaultRenderer: FC<Props> | undefined
+      },
+  >(props: Props): JSX.Element {
+    const { id, name, DefaultRenderer } = props
 
     const customRendererComponentsName = allComponentsName.find((componentName) => id?.startsWith(`${componentName}-`))
     if (customRendererComponentsName) {
-      const customRenderer = allComponents[customRendererComponentsName]?.overridePropField?.[name]
-      if (customRenderer) {
-        return customRenderer(props as any) as any
+      const CustomRenderer = allComponents[customRendererComponentsName]?.overridePropField?.[name]
+      if (CustomRenderer) {
+        return <CustomRenderer {...(props as any)} />
       }
     }
 
-    return <DefaultRenderer {...props}></DefaultRenderer>
+    const AlternateRenderer = DefaultRenderer ?? FieldTypeContainer
+    return <AlternateRenderer {...props}></AlternateRenderer>
   }
 
   return (
@@ -99,27 +140,32 @@ export function PuckEditor<
         ui={{
           previewMode: isReadOnly ? 'interactive' : 'edit',
         }}
-        metadata={{
-          ...metadata,
-          assets,
-        } as PuckEditorEditorMetadataProps<{}>}
+        metadata={editorMetadata}
         overrides={{
           fieldTypes: {
-            textarea: (props) =>
-              commonFieldRenderer(props, (props) => (
-                <FieldTypeContainer {...props}>
-                  {props.field.label && <FieldLabel label={props.field.label} />}
-                  <PuckCkEditor {...props} />{' '}
-                </FieldTypeContainer>
-              )),
-            text: commonFieldRenderer,
-            array: commonFieldRenderer,
-            external: commonFieldRenderer,
-            number: commonFieldRenderer,
-            object: commonFieldRenderer,
-            radio: commonFieldRenderer,
-            select: commonFieldRenderer,
-            slot: commonFieldRenderer,
+            textarea: (props) => (
+              <CommonFieldRenderer
+                {...props}
+                metadata={editorMetadata}
+                DefaultRenderer={() => (
+                  <FieldTypeContainer {...props} metadata={editorMetadata}>
+                    {props.field.label && <FieldLabel label={props.field.label} />}
+                    <PuckCkEditor {...props} />{' '}
+                  </FieldTypeContainer>
+                )}
+              />
+            ),
+
+            text: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
+            array: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
+            external: (props) => (
+              <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />
+            ),
+            number: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
+            object: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
+            radio: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
+            select: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
+            slot: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
           } satisfies FieldRenderFunctions,
           drawer: (props) => {
             const { children } = props
@@ -193,11 +239,11 @@ export function PuckEditor<
         onPublish={async (data) => {
           setIsReadOnly(true)
 
-          if (isDebug) {            
+          if (isDebug) {
             console.log('onPublish', { data })
           }
 
-          onPublish?.(data);
+          onPublish?.(data)
         }}
         onAction={async (action, newState, prevState) => {
           const getPuck = getPuckFnRef.current != null ? getPuckFnRef.current : undefined

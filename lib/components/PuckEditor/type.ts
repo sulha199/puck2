@@ -1,7 +1,8 @@
 import type { Config, FieldProps } from "@measured/puck"
-import type { FC, ReactNode } from "react"
+import type { FC, PropsWithChildren, ReactNode } from "react"
 import type { Field, Participant } from '@azavista/advanced-search'
 import type {Event} from '../../shared/types'
+import type { FieldTypeContainerAdditionalProps } from "./PuckEditor.ui.util"
 
 export type PuckConfigComponents<
   MainComponentMap extends {
@@ -71,10 +72,7 @@ export type AzavistaPuckComponent<
   componentData: DataConfig['components'][keyof DataConfig['components']] & { defaultProps: Props }
   overridePropField?: Partial<{
     [fieldName in keyof Props]: FC<
-      FieldProps & {
-        children: ReactNode
-        name: string
-      }
+      FieldProps & PropsWithChildren<FieldTypeContainerAdditionalProps>
     >
   }>
   overrideFieldsWrapper?: {
