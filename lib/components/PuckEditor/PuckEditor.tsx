@@ -1,39 +1,44 @@
-import { FieldLabel, Puck, useGetPuck, type FieldProps, type FieldRenderFunctions } from '@measured/puck'
-import { PUCK_CONFIG } from 'puck.config'
+import { Puck, FieldLabel, type FieldRenderFunctions, useGetPuck, type Config, type FieldProps, type Data, type DefaultComponents, type DefaultComponentProps, type DefaultRootFieldProps, type OnAction } from '@measured/puck'
 import editorStyles from '@measured/puck/puck.css?url'
-import { PuckCkEditor } from './EditorRichText/CkEditor/CkEditor'
-import { useEffect, useRef, useState, type PropsWithChildren } from 'react'
-import { loadStorage, saveStorage } from '~/routes/_index'
-import './puck-editor.scss'
-import { getPuckComponentName, selectParentComponent, type GetPuckFn } from './puck-editor.util'
 import { delayFn } from 'lib/shared/utils'
+import { useState, useRef, useEffect, useMemo, type FC, type ReactNode, type JSX } from 'react'
 import { useTimeout } from 'usehooks-ts'
+import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
+import { FieldTypeContainer } from './PuckEditor.ui.util'
+import { type GetPuckFn, getPuckComponentNameToRender, getUIEditorPuckConfig, selectParentComponent } from './PuckEditor.util'
+import { type AzavistaPuckMainComponent, type AzavistaPuckComponent, type UIEditorProps, mapRecordProperty, type PuckConfigComponents } from './type'
+import './PuckEditor.scss'
 
-const styleUrls = [
-  'https://3.0.devk8s.azavista.com/azavista-builder-newsletter-default.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css',
-  'https://3.0.devk8s.azavista.com/theme/63e50adf44e7429377b6b4ba.css',
-]
 
-function FieldTypeContainer<T extends keyof FieldRenderFunctions, FieldType extends { type: T }>(
-  props: FieldProps<FieldType, any> & PropsWithChildren<{ name: string }>
-) {
-  const { children, field, value, name } = props
-  return (
-    <div
-      className={`puck-fields__field puck-fields__field--name_${name} puck-fields__field--type_${field.type} puck-fields__field--value_${value}`}>
-      {children}
-    </div>
+export function PuckEditor<
+  MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
+  ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
+  CategoryName extends string,
+>(props: UIEditorProps<MainComponentMap, ChildComponentMap, CategoryName> & {
+  onPublish: (data: Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>) => void
+  onAction?: OnAction<Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>>
+  isDebug: boolean;
+}) {
+  const { childComponentMap, contentData, mainComponentMap, styleUrls, categories, onPublish, isDebug } = props
+
+  const allComponents = useMemo(
+    () => ({
+      ...childComponentMap,
+      ...mainComponentMap,
+    }),
+    [childComponentMap, mainComponentMap]
   )
-}
+  const allComponentsName = useMemo(() => Object.keys(allComponents), [allComponents])
+  const puckConfig = useMemo(() => getUIEditorPuckConfig(props), [mainComponentMap, childComponentMap, categories])
 
-export function PuckEditor() {
-  const data = loadStorage()
+  // type PuckConfig = typeof puckConfig;
+  type PuckConfig = any;
+
   const [isReadOnly, setIsReadOnly] = useState(false)
   const iframeRef = useRef<Document>(null)
   const outlinesDivRef = useRef<HTMLDivElement>(null)
-  const getPuckFnRef = useRef<GetPuckFn>(null)
-  const updateOutline = (getPuck: GetPuckFn) => {
+  const getPuckFnRef = useRef<GetPuckFn<any>>(null)
+  const updateOutline = (getPuck: GetPuckFn<any>) => {
     const attrComponentId = 'data-puck-outline-component-id'
     const attrComponentType = 'data-puck-outline-component-type'
     const {
@@ -48,53 +53,63 @@ export function PuckEditor() {
       el.setAttribute(attrComponentId, propsId)
       el.setAttribute(attrComponentType, component.type)
 
-      const componentName = getPuckComponentName(propsId, getPuck)
+      const componentName = getPuckComponentNameToRender(propsId, getPuck)
       if (componentName) {
         el.querySelector('[class*="Layer-name"]')!.innerHTML = componentName
       }
     })
   }
 
+  function commonFieldRenderer<
+    T extends string,
+    FieldType extends {
+      type: T
+    },
+    Props extends FieldProps<FieldType, any> & {
+      name: string
+    } & {
+      children?: ReactNode | undefined
+    },
+  >(props: Props, DefaultRenderer: FC<Props> = FieldTypeContainer): JSX.Element {
+    const { id, name } = props
+
+    const customRendererComponentsName = allComponentsName.find((componentName) => id?.startsWith(`${componentName}-`))
+    if (customRendererComponentsName) {
+      const customRenderer = allComponents[customRendererComponentsName]?.overridePropField?.[name]
+      if (customRenderer) {
+        return customRenderer(props as any) as any
+      }
+    }
+
+    return <DefaultRenderer {...props}></DefaultRenderer>
+  }
+
   return (
     <>
       <link rel='stylesheet' href={editorStyles} id='puck-css' />
       <Puck
-        config={PUCK_CONFIG}
-        data={data}
+        config={puckConfig as any}
+        data={contentData}
         ui={{
           previewMode: isReadOnly ? 'interactive' : 'edit',
         }}
         overrides={{
           fieldTypes: {
-            textarea: (props) => (
-              <FieldTypeContainer {...props}>
-                {props.field.label && <FieldLabel label={props.field.label} />}
-                <PuckCkEditor {...props} />{' '}
-              </FieldTypeContainer>
-            ),
-            text: (props) => {
-              const { id, name } = props
-              const isImageInput = name === 'src' && id?.startsWith('HtmlImage-')
-
-              if (isImageInput) {
-                return (
-                  <FieldTypeContainer {...props}>
-                    <div>
-                      Here should show Image picker <br />
-                      and image thumb nails
-                    </div>
-                  </FieldTypeContainer>
-                )
-              }
-              return <FieldTypeContainer {...props}></FieldTypeContainer>
-            },
-            array: FieldTypeContainer,
-            external: FieldTypeContainer,
-            number: FieldTypeContainer,
-            object: FieldTypeContainer,
-            radio: FieldTypeContainer,
-            select: FieldTypeContainer,
-            slot: FieldTypeContainer,
+            textarea: (props) =>
+              commonFieldRenderer(props, (props) => (
+                <FieldTypeContainer {...props}>
+                  {props.field.label && <FieldLabel label={props.field.label} />}
+                  <PuckCkEditor {...props} />{' '}
+                </FieldTypeContainer>
+              )),
+            text: commonFieldRenderer,
+            array: commonFieldRenderer,
+            external: commonFieldRenderer,
+            number: commonFieldRenderer,
+            object: commonFieldRenderer,
+            radio: commonFieldRenderer,
+            select: commonFieldRenderer,
+            slot: commonFieldRenderer,
           } satisfies FieldRenderFunctions,
           drawer: (props) => {
             const { children } = props
@@ -106,7 +121,7 @@ export function PuckEditor() {
           },
           fields: (props) => {
             const { children } = props
-            const getPuck = useGetPuck() as any as GetPuckFn
+            const getPuck = useGetPuck() as any as GetPuckFn<any>
 
             const { selectedItem } = getPuck()
             const type = selectedItem?.type || 'Nothing'
@@ -114,15 +129,11 @@ export function PuckEditor() {
             const className = `puck-fields`
             const classNameWithType = `${className}--type_${type}`
 
-            // useEffect(() => {
-            //   console.log('fields',selectedItem, appState)
-            // }, [selectedItem])
-
             const selectParentSection = () => {
               return selectedItem?.props.id && selectParentComponent(selectedItem.props.id, getPuck)
             }
 
-            const shouldDisplayPopup = type === 'RendererTextArea' || type === 'HtmlImage'
+            const shouldDisplayPopup = !!allComponents[type]?.overrideFieldsWrapper?.shouldDisplayPopup
             // const shouldDisplayPopup = false
             const popupClassname = shouldDisplayPopup ? `${className}--popup-element` : ''
 
@@ -157,7 +168,7 @@ export function PuckEditor() {
             return <div className='dsdsdsdsdsd'>{children}</div>
           },
           outline: ({ children }) => {
-            const getPuck = useGetPuck() as any as GetPuckFn
+            const getPuck = useGetPuck() as any as GetPuckFn<any>
             getPuckFnRef.current = getPuck
             useTimeout(() => {
               updateOutline(getPuck)
@@ -172,12 +183,17 @@ export function PuckEditor() {
         onPublish={async (data) => {
           setIsReadOnly(true)
 
-          console.log('savePage', { data })
-          saveStorage(data)
+          if (isDebug) {            
+            console.log('onPublish', { data })
+          }
+
+          onPublish?.(data);
         }}
         onAction={async (action, newState, prevState) => {
           const getPuck = getPuckFnRef.current != null ? getPuckFnRef.current : undefined
-          console.log('onaction', action.type, { action, newState, prevState })
+          if (isDebug) {
+            console.log('onAction', action.type, { action, newState, prevState })
+          }
 
           if ((action.type === 'setData' || action.type === 'replace') && getPuck) {
             await delayFn(500)

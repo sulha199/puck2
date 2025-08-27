@@ -6,7 +6,8 @@ import { InlineEditor } from 'ckeditor5'
 import { useDebounceCallback, useDebounceValue } from 'usehooks-ts'
 import { getReplacedContentWithMergeTags } from './RendererTextArea.utils'
 import { RENDERER_TEXTAREA_SAVE_TEXT_DEBOUNCE } from 'lib/shared/const'
-import { updateComponentData, useGetPuckAnyWhere } from '../puck-editor.util'
+import { getLanguageMap, updateComponentData, useGetPuckAnyWhere } from '../PuckEditor/PuckEditor.util'
+import type { AzavistaPuckComponent } from '../PuckEditor/type'
 
 export type RendererTextAreaAttrProps = {
   content: string
@@ -15,6 +16,15 @@ export type RendererTextAreaAttrProps = {
     [lang in Language]: string
   }
   name?: string
+}
+
+export const COMPONENT_DATA_RENDERER_TEXTAREA_DEFAULT: RendererTextAreaAttrProps = {
+  content: '',
+  useTranslation: 0,
+  contentTranslations: {
+    en_us: '',
+    id_id: '',
+  },
 }
 
 export type RendererTextAreaInternalProps = {
@@ -106,10 +116,10 @@ export const RendererTextAreaDivEditor = (props: RendererTextAreaAttrProps & Ren
             propsId,
             'RendererTextArea',
             (prev) => {
-              if (prev.useTranslation) {                
+              if (prev.useTranslation) {
                 prev.contentTranslations = {
                   ...prev.contentTranslations,
-                  [lang]: value
+                  [lang]: value,
                 }
               } else {
                 prev.content = value
@@ -174,4 +184,41 @@ const RendererTextAreaDivEl: FC<PropsWithChildren<{ elementAttrs: HTMLAttributes
       {...elementAttrs}
       children={children}></div>
   )
+}
+
+export const RendererTextAreaPuckComponent: AzavistaPuckComponent<RendererTextAreaAttrProps> = {
+  componentData: {
+    label: 'Text Area',
+    fields: {
+      useTranslation: {
+        label: 'Translate',
+        type: 'select',
+        options: [
+          {
+            value: 0,
+            label: 'no',
+          },
+          {
+            value: 1,
+            label: 'yes',
+          },
+        ],
+      },
+      content: {
+        type: 'textarea',
+        label: 'Universal Content',
+        contentEditable: true,
+      },
+      contentTranslations: {
+        type: 'object',
+        label: 'Language Translations',
+        objectFields: getLanguageMap(),
+      },
+    },
+    defaultProps: COMPONENT_DATA_RENDERER_TEXTAREA_DEFAULT,
+    render: (props) => RendererTextArea(props),
+  },
+  overrideFieldsWrapper: {
+    shouldDisplayPopup: true,
+  }
 }

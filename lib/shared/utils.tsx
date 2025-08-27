@@ -1,3 +1,4 @@
+
 /**@deprecated */
 export const getPuckIframe = (): HTMLIFrameElement | null => {
   return document.querySelector<HTMLIFrameElement>('#preview-frame');

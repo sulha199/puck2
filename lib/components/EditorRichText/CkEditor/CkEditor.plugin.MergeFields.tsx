@@ -69,7 +69,6 @@ export default class CkEditorPluginMergeFields extends Plugin {
       })
       addListToDropdown(dropdownView, items)
       dropdownView.on('execute', (event) => {
-        console.log('dropdownView executr', event)
         const eventSourceButtonView = event.source as ButtonView;
         if (eventSourceButtonView.label && eventSourceButtonView.label?.startsWith('{{')) {
           // Change the model to insert the text.
