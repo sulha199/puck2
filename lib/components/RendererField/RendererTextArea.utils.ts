@@ -1,6 +1,7 @@
-import { type Language, participant, dictionary } from "lib/shared/data"
+import type { Participant } from "@azavista/advanced-search"
+import type { PuckEditorDictionaryItem } from "../PuckEditor/type"
 
-export function getReplacedContentWithMergeTags(selectedContent: string, params: URLSearchParams, lang: Language) {
+export function getReplacedContentWithMergeTags(selectedContent: string, params: URLSearchParams, lang: string, participant: Participant, dictionary: PuckEditorDictionaryItem) {
   const mergeTags = [...selectedContent.matchAll(/\{\{[^\}]+\}\}/gm)]
   let replacedContent = `${selectedContent}`
   mergeTags.forEach((regexResult) => {

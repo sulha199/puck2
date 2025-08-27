@@ -1,3 +1,4 @@
+import type { EventSettings } from "@azavista/advanced-search/lib/search-types"
 
 export type Asset = {
   id: string
@@ -20,3 +21,13 @@ export type Asset = {
 }
 
 export type CssSelection = Array<string>
+
+export type Event = {
+  external_id?: string;
+  name: string;
+  start: string;
+  end: string;
+  timezone: string;
+  settings: EventSettings;
+  series_id?: string;
+}

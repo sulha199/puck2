@@ -1,13 +1,9 @@
 // import type { Mention } from '';
 
 // import { Plugin } from '@ckeditor/ckeditor5-core'
+import type { Field } from '@azavista/advanced-search'
 import { addListToDropdown, Collection, createDropdown, ViewModel, Plugin, SplitButtonView, type ListDropdownButtonDefinition, type ListDropdownGroupDefinition, ButtonView, DropdownButtonView } from 'ckeditor5'
-
-// import Model from '@ckeditor/ckeditor5-ui/src/model'
-// import { addListToDropdown, createDropdown, type ListDropdownButtonDefinition, type ListDropdownGroupDefinition } from '@ckeditor/ckeditor5-ui/src/dropdown/utils'
-// import SplitButtonView from '@ckeditor/ckeditor5-ui/src/dropdown/button/splitbuttonview'
-// import { Collection } from '@ckeditor/ckeditor5-utils'
-import { dictionary, participant } from 'lib/shared/data'
+import type { PuckEditorDictionary } from 'lib/components/PuckEditor/type'
 
 export default class CkEditorPluginMergeFields extends Plugin {
   /**
@@ -23,6 +19,10 @@ export default class CkEditorPluginMergeFields extends Plugin {
     return 'MergeFields' as const
   }
 
+  static participantFields: Field[] = []
+
+  static dictionary: PuckEditorDictionary = {};
+
   init() {
     const editor = this.editor
     editor.ui.componentFactory.add('mergeFields', (locale) => {
@@ -36,17 +36,17 @@ export default class CkEditorPluginMergeFields extends Plugin {
         
       })
       const participantItems = new Collection<ListDropdownButtonDefinition>()
-      Object.keys(participant).forEach((key) =>
+      CkEditorPluginMergeFields.participantFields.forEach((field) =>
         participantItems.add({
           model: new ViewModel({
             withText: true,
-            label: `{{participant.${key}}}`,
+            label: `{{participant.${field.name}}}`,
           }),
           type: 'button',
         })
       )
       const dictionaryItems = new Collection<ListDropdownButtonDefinition>()
-      Object.keys(dictionary.en_us).forEach((key) =>
+      Object.keys(Object.values(CkEditorPluginMergeFields.dictionary)[0] || {}).forEach((key) =>
         dictionaryItems.add({
           model: new ViewModel({
             withText: true,

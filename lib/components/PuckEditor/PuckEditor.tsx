@@ -1,4 +1,4 @@
-import { Puck, FieldLabel, type FieldRenderFunctions, useGetPuck, type Config, type FieldProps, type Data, type DefaultComponents, type DefaultComponentProps, type DefaultRootFieldProps, type OnAction } from '@measured/puck'
+import { Puck, FieldLabel, type FieldRenderFunctions, useGetPuck, type FieldProps, type Data, type DefaultComponents, type DefaultComponentProps, type DefaultRootFieldProps, type OnAction } from '@measured/puck'
 import editorStyles from '@measured/puck/puck.css?url'
 import { delayFn } from 'lib/shared/utils'
 import { useState, useRef, useEffect, useMemo, type FC, type ReactNode, type JSX } from 'react'
@@ -6,20 +6,26 @@ import { useTimeout } from 'usehooks-ts'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
 import { FieldTypeContainer } from './PuckEditor.ui.util'
 import { type GetPuckFn, getPuckComponentNameToRender, getUIEditorPuckConfig, selectParentComponent } from './PuckEditor.util'
-import { type AzavistaPuckMainComponent, type AzavistaPuckComponent, type UIEditorProps, mapRecordProperty, type PuckConfigComponents } from './type'
+import { type AzavistaPuckMainComponent, type AzavistaPuckComponent, type PuckEditorProps, type PuckEditorMetadata } from './type'
 import './PuckEditor.scss'
+import type { Asset } from 'lib/shared/types'
 
+export type PuckEditorEditorProps = {
+  assets: Asset[]
+  onPublish: (data: Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>) => void
+  onAction?: OnAction<Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>>
+  isDebug: boolean
+}
+
+export type PuckEditorEditorMetadataProps<Props extends {}> = PuckEditorMetadata<Props> & Pick<PuckEditorEditorProps, 'assets'>
 
 export function PuckEditor<
   MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
   ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
   CategoryName extends string,
->(props: UIEditorProps<MainComponentMap, ChildComponentMap, CategoryName> & {
-  onPublish: (data: Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>) => void
-  onAction?: OnAction<Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>>
-  isDebug: boolean;
-}) {
-  const { childComponentMap, contentData, mainComponentMap, styleUrls, categories, onPublish, isDebug } = props
+  Metadata extends PuckEditorMetadata<{}>
+>(props: PuckEditorProps<MainComponentMap, ChildComponentMap, CategoryName, Metadata> & PuckEditorEditorProps) {
+  const { childComponentMap, contentData, mainComponentMap, styleUrls, categories, onPublish, isDebug, metadata, assets } = props
 
   const allComponents = useMemo(
     () => ({
@@ -93,6 +99,10 @@ export function PuckEditor<
         ui={{
           previewMode: isReadOnly ? 'interactive' : 'edit',
         }}
+        metadata={{
+          ...metadata,
+          assets,
+        } as PuckEditorEditorMetadataProps<{}>}
         overrides={{
           fieldTypes: {
             textarea: (props) =>

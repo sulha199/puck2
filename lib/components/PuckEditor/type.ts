@@ -1,5 +1,7 @@
 import type { Config, FieldProps } from "@measured/puck"
 import type { FC, ReactNode } from "react"
+import type { Field, Participant } from '@azavista/advanced-search'
+import type {Event} from '../../shared/types'
 
 export type PuckConfigComponents<
   MainComponentMap extends {
@@ -21,31 +23,42 @@ export type Category<ComponentName extends string> = {
   defaultExpanded?: boolean
 }
 
-export type UIEditorProps<
+export type PuckEditorProps<
   MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
   ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
   CategoryName extends string,
+  Metadata extends PuckEditorMetadata<{}>
 > = {
   mainComponentMap: MainComponentMap
   childComponentMap: ChildComponentMap
   categories: Record<CategoryName, Category<Extract<keyof MainComponentMap, string>>>
   contentData: any
   styleUrls: string[]
+  metadata: Metadata
 }
 
-export function mapRecordProperty<T extends Record<string, any>, P extends keyof T[keyof T]>(
-  record: T,
-  propertyName: P
-): { [itemKey in keyof T]: T[itemKey][P] } {
-  return Object.keys(record).reduce(
-    (result, key) => ({
-      ...result,
-      [key]: (record[key] as any)[propertyName],
-    }),
-    {}
-  ) as any
+export type PuckEditorLanguage = {
+    id: string;
+    label: string;
+  }
+
+export type PuckEditorDictionaryItem = {
+  [translationKey: string]: string
 }
 
+  export type PuckEditorDictionary = {
+    [languageCode: string]: PuckEditorDictionaryItem
+  }
+
+export type PuckEditorMetadata<Props extends {} = {}> = {
+  selectedLanguage: string;
+  languages: Array<PuckEditorLanguage>
+  dictionary: PuckEditorDictionary;
+  participant: Participant
+  participantFields: Field[]
+  event: Event
+  eventFields: Field[]
+} & Props;
 
 export type AzavistaPuckComponent<
   Props extends {},

@@ -6,8 +6,15 @@ import {
   type Field,
   type PuckApi,
 } from '@measured/puck'
-import { mapRecordProperty, type AzavistaPuckComponent, type AzavistaPuckMainComponent, type PuckConfigComponents, type UIEditorProps } from './type'
-import type { Language } from 'lib/shared/data'
+import {
+  type AzavistaPuckComponent,
+  type AzavistaPuckMainComponent,
+  type PuckConfigComponents,
+  type PuckEditorLanguage,
+  type PuckEditorMetadata,
+  type PuckEditorProps,
+} from './type'
+import { mapRecordProperty } from 'lib/shared/utils'
 
 export type GetPuckFn<PuckConfig extends Config> = () => PuckApi<PuckConfig>
 
@@ -20,10 +27,13 @@ export const useGetPuckAnyWhere = <PuckConfig extends Config>() => {
 }
 
 export const getPuckComponentNameFromFieldId = (fieldId: string): string | undefined => {
-    return fieldId.split('-')[0]
+  return fieldId.split('-')[0]
 }
 
-export const getPuckComponentNameToRender = <PuckConfig extends Config = any>(componentId: string, getPuck: GetPuckFn<PuckConfig>) => {
+export const getPuckComponentNameToRender = <PuckConfig extends Config = any>(
+  componentId: string,
+  getPuck: GetPuckFn<PuckConfig>
+) => {
   const { config, getItemById } = getPuck()
   const componentProps = getItemById(componentId)
   if (!componentProps) {
@@ -71,9 +81,10 @@ export const updateComponentData = <
   if (index != undefined && zone != undefined && component) {
     component = {
       ...component,
-      props: {...component.props}
+      props: { ...component.props },
     }
-    const dataPropsToDispatch = typeof dataProps === 'function' ? (dataProps as any)(component.props as DataProps) : dataProps
+    const dataPropsToDispatch =
+      typeof dataProps === 'function' ? (dataProps as any)(component.props as DataProps) : dataProps
     dispatch({
       type: 'replace',
       destinationIndex: index,
@@ -92,7 +103,7 @@ export const updateComponentData = <
   }
 }
 
-export const getComponent = <PuckConfig extends Config,T extends keyof PuckConfig['components']>(
+export const getComponent = <PuckConfig extends Config, T extends keyof PuckConfig['components']>(
   componentId: string,
   type: T,
   getPuck: GetPuckFn<PuckConfig>
@@ -106,9 +117,10 @@ export function getUIEditorPuckConfig<
   MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
   ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
   CategoryName extends string,
+  Metadata extends PuckEditorMetadata<{}>,
 >(
   props: Pick<
-    UIEditorProps<MainComponentMap, ChildComponentMap, CategoryName>,
+    PuckEditorProps<MainComponentMap, ChildComponentMap, CategoryName, Metadata>,
     'mainComponentMap' | 'childComponentMap' | 'categories'
   >
 ): Config<{
@@ -128,9 +140,12 @@ export function getUIEditorPuckConfig<
   } as any
 }
 
-export const getLanguageMap = () => {
-  return {
-    en_us: { type: 'textarea', label: 'en_us', contentEditable: true },
-    id_id: { type: 'textarea', label: 'id_id', contentEditable: true },
-  }  as const satisfies Record<Language, Field<string>>
+export const getLanguageMap = (languages: PuckEditorLanguage[]) => {
+  return languages.reduce(
+    (record, lang) => ({
+      ...record,
+      [lang.id]: { type: 'textarea', label: lang.label, contentEditable: true } as Omit<Field<string>, 'render'>,
+    }),
+    {} as Record<string, Omit<Field<string>, 'render'>>
+  )
 }

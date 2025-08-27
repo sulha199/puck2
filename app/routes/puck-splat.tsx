@@ -9,6 +9,7 @@ import { EmailHeaderPuckComponent } from './components/EmailHeader'
 import { EmailSectionTwoColumnsPuckComponent } from './components/EmailSectionTwoColumns'
 import { EmailFooterPuckComponent } from './components/EmailFooter'
 import type { Data } from '@measured/puck'
+import { DUMMY_ASSETS, metadata } from '~/data'
 
 // export async function loader({ params }: Route.LoaderArgs) {
 //   const pathname = params["*"] ?? "/";
@@ -83,7 +84,7 @@ export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
         isDebug={true}
         childComponentMap={{
           HtmlImage: HtmlImagePuckComponent,
-          RendererTextArea: RendererTextAreaPuckComponent,
+          RendererTextArea: RendererTextAreaPuckComponent(metadata.languages),
         }}
         mainComponentMap={{
           EmailHeader: EmailHeaderPuckComponent,
@@ -98,6 +99,8 @@ export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
             components: ['EmailFooter', 'EmailHeader', 'EmailTwoColumnText'],
           }
         }}
+        assets={DUMMY_ASSETS}
+        metadata={metadata}
         onPublish={data => saveStorage(data)}
         ></PuckEditor>
     </div>

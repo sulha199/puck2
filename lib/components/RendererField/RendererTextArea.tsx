@@ -1,5 +1,10 @@
-import { registerOverlayPortal, type FieldTransformFnParams, type TextareaField } from '@measured/puck'
-import { dictionary, type Language } from 'lib/shared/data'
+import {
+  registerOverlayPortal,
+  type FieldTransformFnParams,
+  type TextareaField,
+  type WithId,
+  type WithPuckProps,
+} from '@measured/puck'
 import { useMemo, useState, type FC, type HTMLAttributes, type PropsWithChildren, type ReactElement } from 'react'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
 import { InlineEditor } from 'ckeditor5'
@@ -7,13 +12,14 @@ import { useDebounceCallback, useDebounceValue } from 'usehooks-ts'
 import { getReplacedContentWithMergeTags } from './RendererTextArea.utils'
 import { RENDERER_TEXTAREA_SAVE_TEXT_DEBOUNCE } from 'lib/shared/const'
 import { getLanguageMap, updateComponentData, useGetPuckAnyWhere } from '../PuckEditor/PuckEditor.util'
-import type { AzavistaPuckComponent } from '../PuckEditor/type'
+import type { AzavistaPuckComponent, PuckEditorLanguage, PuckEditorMetadata } from '../PuckEditor/type'
+import CkEditorPluginMergeFields from '../EditorRichText/CkEditor/CkEditor.plugin.MergeFields'
 
 export type RendererTextAreaAttrProps = {
   content: string
   useTranslation: 0 | 1
   contentTranslations: {
-    [lang in Language]: string
+    [lang: string]: string
   }
   name?: string
 }
@@ -29,20 +35,21 @@ export const COMPONENT_DATA_RENDERER_TEXTAREA_DEFAULT: RendererTextAreaAttrProps
 
 export type RendererTextAreaInternalProps = {
   elementAttrs: HTMLAttributes<HTMLDivElement>
-  lang: Language
+  lang: string
   selectedContent: string
   params: URLSearchParams
 }
 
-export const RendererTextArea = (props: RendererTextAreaAttrProps) => {
+export const RendererTextArea = (props: WithId<WithPuckProps<RendererTextAreaAttrProps>>) => {
+  const { content, useTranslation, contentTranslations, puck } = props
   const getPuck = useGetPuckAnyWhere()
   const isPuckEditing = !!getPuck
 
   const params = new URL(document.location.toString()).searchParams
-  const lang: Language = (params.get('lang') as Language) || 'en_us'
+  const puckMetadata = puck.metadata as PuckEditorMetadata<{}>
+  const lang: string = puckMetadata.selectedLanguage || puckMetadata.languages[0].id
 
   const fieldType = 'textarea'
-  const { content, useTranslation, contentTranslations } = props
   const fieldName: keyof RendererTextAreaAttrProps = useTranslation ? 'contentTranslations' : 'content'
 
   const selectedContentNode: ReactElement<FieldTransformFnParams<TextareaField>> = (
@@ -80,8 +87,10 @@ export const RendererTextAreaDivReadonly = ({
   lang,
   params,
   selectedContent,
-}: RendererTextAreaAttrProps & RendererTextAreaInternalProps) => {
-  let replacedContent = getReplacedContentWithMergeTags(selectedContent, params, lang)
+  puck,
+}: WithId<WithPuckProps<RendererTextAreaAttrProps & RendererTextAreaInternalProps>>) => {
+  const { dictionary, participant } = puck.metadata as PuckEditorMetadata
+  let replacedContent = getReplacedContentWithMergeTags(selectedContent, params, lang, participant, dictionary[lang])
   elementAttrs = {
     ...elementAttrs,
     dangerouslySetInnerHTML: { __html: replacedContent },
@@ -90,13 +99,18 @@ export const RendererTextAreaDivReadonly = ({
   return <RendererTextAreaDivEl elementAttrs={elementAttrs} />
 }
 
-export const RendererTextAreaDivEditor = (props: RendererTextAreaAttrProps & RendererTextAreaInternalProps) => {
+export const RendererTextAreaDivEditor = (
+  props: WithId<WithPuckProps<RendererTextAreaAttrProps & RendererTextAreaInternalProps>>
+) => {
   const getPuck = useGetPuckAnyWhere()
   const [isFocussed, setIsFocussed] = useState(false)
   const [isShowPopupButton] = useDebounceValue(isFocussed, 500)
-  const { elementAttrs, lang, selectedContent, useTranslation, contentTranslations } = props
+  const { elementAttrs, lang, selectedContent, useTranslation, contentTranslations, puck } = props
+  const puckMetadata = puck.metadata as PuckEditorMetadata
+  CkEditorPluginMergeFields.dictionary = puckMetadata.dictionary
+  CkEditorPluginMergeFields.participantFields = puckMetadata.participantFields
   const isContentLanguageSet = useMemo(() => {
-    const languages = Object.keys(dictionary) as Language[]
+    const languages = puckMetadata.languages.map(({ id }) => id)
     const getInnerText = (content: string) => {
       return content.replace(/<[^>]*>/g, '').trim()
     }
@@ -186,7 +200,9 @@ const RendererTextAreaDivEl: FC<PropsWithChildren<{ elementAttrs: HTMLAttributes
   )
 }
 
-export const RendererTextAreaPuckComponent: AzavistaPuckComponent<RendererTextAreaAttrProps> = {
+export const RendererTextAreaPuckComponent: (
+  languages: PuckEditorLanguage[]
+) => AzavistaPuckComponent<RendererTextAreaAttrProps> = (languages) => ({
   componentData: {
     label: 'Text Area',
     fields: {
@@ -212,7 +228,7 @@ export const RendererTextAreaPuckComponent: AzavistaPuckComponent<RendererTextAr
       contentTranslations: {
         type: 'object',
         label: 'Language Translations',
-        objectFields: getLanguageMap(),
+        objectFields: getLanguageMap(languages) as any,
       },
     },
     defaultProps: COMPONENT_DATA_RENDERER_TEXTAREA_DEFAULT,
@@ -220,5 +236,5 @@ export const RendererTextAreaPuckComponent: AzavistaPuckComponent<RendererTextAr
   },
   overrideFieldsWrapper: {
     shouldDisplayPopup: true,
-  }
-}
+  },
+})
