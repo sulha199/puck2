@@ -190,7 +190,6 @@ export function PuckEditor<
             }
 
             const shouldDisplayPopup = !!allComponents[type]?.overrideFieldsWrapper?.shouldDisplayPopup
-            // const shouldDisplayPopup = false
             const popupClassname = shouldDisplayPopup ? `${className}--popup-element` : ''
 
             return (

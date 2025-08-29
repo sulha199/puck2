@@ -5,15 +5,16 @@ import {
   type WithId,
   type WithPuckProps,
 } from '@measured/puck'
-import { useMemo, useState, type FC, type HTMLAttributes, type PropsWithChildren, type ReactElement } from 'react'
+import { useCallback, useMemo, useState, type FC, type HTMLAttributes, type PropsWithChildren, type ReactElement } from 'react'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
 import { InlineEditor } from 'ckeditor5'
 import { useDebounceCallback, useDebounceValue } from 'usehooks-ts'
 import { getReplacedContentWithMergeTags } from './RendererTextArea.utils'
 import { RENDERER_TEXTAREA_SAVE_TEXT_DEBOUNCE } from 'lib/shared/const'
-import { getLanguageMap, updateComponentData, useGetPuckAnyWhere } from '../PuckEditor/PuckEditor.util'
+import { getLanguageMap, getPuckComponentIdFromFieldId, selectParentComponent, updateComponentData, useGetPuckAnyWhere } from '../PuckEditor/PuckEditor.util'
 import type { AzavistaPuckComponent, PuckEditorLanguage, PuckEditorMetadata } from '../PuckEditor/type'
 import CkEditorPluginMergeFields from '../EditorRichText/CkEditor/CkEditor.plugin.MergeFields'
+import { delayFn } from 'lib/shared/utils'
 
 export type RendererTextAreaAttrProps = {
   content: string
@@ -162,6 +163,25 @@ export const RendererTextAreaDivEditor = (
     )
   }, [getPuck, isContentLanguageSet, isShowPopupButton])
 
+  const onFocusChange = useCallback(async (focusValue: boolean) => {
+    setIsFocussed(focusValue);
+    if (focusValue) {
+      const componentId = getPuckComponentIdFromFieldId(propsId)
+      if (componentId && getPuck) {
+        await delayFn(300);
+        selectParentComponent(componentId, getPuck);
+      }
+    }
+  }, [getPuck])
+
+  const onFocus = useCallback(async () => {
+    await onFocusChange(true);
+  }, [onFocusChange])
+
+  const onBlur = useCallback(async () => {
+    await onFocusChange(false);
+  }, [onFocusChange])
+
   const editorChildren = useMemo(() => {
     if (!getPuck) {
       return undefined
@@ -172,8 +192,8 @@ export const RendererTextAreaDivEditor = (
           editor={InlineEditor as any}
           onChange={setTextValueDebounced}
           value={selectedContent}
-          onFocus={() => setIsFocussed(true)}
-          onBlur={() => setIsFocussed(false)}
+          onFocus={onFocus}
+          onBlur={onBlur}
         />
       </>
     ) : undefined

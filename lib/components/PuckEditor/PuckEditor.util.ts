@@ -30,6 +30,10 @@ export const getPuckComponentNameFromFieldId = (fieldId: string): string | undef
   return fieldId.split('-')[0]
 }
 
+export const getPuckComponentIdFromFieldId = (fieldId: string): string | undefined => {
+  return fieldId.split(':')[0]
+}
+
 export const getPuckComponentNameToRender = <PuckConfig extends Config = any>(
   componentId: string,
   getPuck: GetPuckFn<PuckConfig>
@@ -148,4 +152,10 @@ export const getLanguageMap = (languages: PuckEditorLanguage[]) => {
     }),
     {} as Record<string, Omit<Field<string>, 'render'>>
   )
+}
+
+export class PuckEditorStaticData {
+  static componentNameMap: {
+    [componentId: string]: string
+  } = {}
 }
