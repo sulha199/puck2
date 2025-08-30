@@ -34,7 +34,7 @@ export const getPuckComponentIdFromFieldId = (fieldId: string): string | undefin
   return fieldId.split(':')[0]
 }
 
-export const getPuckComponentNameToRender = <PuckConfig extends Config = any>(
+export const getPuckComponentNameAsLabel = <PuckConfig extends Config = any>(
   componentId: string,
   getPuck: GetPuckFn<PuckConfig>
 ) => {

@@ -9,7 +9,7 @@ import {
   type DefaultComponentProps,
   type DefaultRootFieldProps,
   type OnAction,
-} from '@measured/puck'
+  ActionBar} from '@measured/puck'
 import editorStyles from '@measured/puck/puck.css?url'
 import { delayFn } from 'lib/shared/utils'
 import { useState, useRef, useEffect, useMemo, type FC, type ReactNode, type JSX } from 'react'
@@ -18,7 +18,7 @@ import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
 import { FieldTypeContainer, type FieldTypeContainerAdditionalProps } from './PuckEditor.ui.util'
 import {
   type GetPuckFn,
-  getPuckComponentNameToRender,
+  getPuckComponentNameAsLabel,
   getUIEditorPuckConfig,
   selectParentComponent,
 } from './PuckEditor.util'
@@ -93,7 +93,7 @@ export function PuckEditor<
       el.setAttribute(attrComponentId, propsId)
       el.setAttribute(attrComponentType, component.type)
 
-      const componentName = getPuckComponentNameToRender(propsId, getPuck)
+      const componentName = getPuckComponentNameAsLabel(propsId, getPuck)
       if (componentName) {
         el.querySelector('[class*="Layer-name"]')!.innerHTML = componentName
       }
@@ -167,6 +167,20 @@ export function PuckEditor<
             select: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
             slot: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
           } satisfies FieldRenderFunctions,
+          actionBar: (props) => {
+            let {children, parentAction, label} = props            
+            const getPuck = useGetPuck() as any as GetPuckFn<any>
+            const {selectedItem} = getPuck()
+            const selectedItemId: string | undefined = selectedItem?.props.id
+            label = selectedItemId ? getPuckComponentNameAsLabel(selectedItemId, getPuck) : label;
+            return <ActionBar>
+              <ActionBar.Group>
+                {parentAction}
+                {label && <ActionBar.Label label={label} />}
+              </ActionBar.Group>
+              <ActionBar.Group>{children}</ActionBar.Group>
+            </ActionBar>
+          },
           drawer: (props) => {
             const { children } = props
 
