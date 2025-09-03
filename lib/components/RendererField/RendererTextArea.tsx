@@ -28,7 +28,6 @@ import {
   useGetPuckAnyWhere,
 } from '../PuckEditor/PuckEditor.util'
 import type { AzavistaPuckComponent, PuckEditorLanguage, PuckEditorMetadata } from '../PuckEditor/type'
-import CkEditorPluginMergeFields from '../EditorRichText/CkEditor/CkEditor.plugin.MergeFields'
 import { delayFn } from 'lib/shared/utils'
 
 export type RendererTextAreaAttrProps = {
@@ -78,7 +77,7 @@ export const RendererTextArea = (props: WithId<WithPuckProps<RendererTextAreaAtt
     [useTranslation, content, contentTranslations[lang]]
   )
   const selectedContent: string = useMemo(
-    () => (isPuckEditing ? selectedContentNode?.props?.value : selectedContentNode) || '',
+    () => (isPuckEditing && selectedContentNode?.props?.value != null ? selectedContentNode?.props?.value : selectedContentNode) || '',
     [isPuckEditing, selectedContentNode]
   )
 
@@ -136,8 +135,6 @@ export const RendererTextAreaDivEditor = (
   const [isShowPopupButton] = useDebounceValue(isFocussed, 500)
   const { elementAttrs, lang, selectedContent, useTranslation, contentTranslations, puck } = props
   const puckMetadata = puck.metadata as PuckEditorMetadata
-  CkEditorPluginMergeFields.dictionary = puckMetadata.dictionary
-  CkEditorPluginMergeFields.participantFields = puckMetadata.participantFields
   const isContentLanguageSet = useMemo(() => {
     const languages = puckMetadata.languages.map(({ id }) => id)
     const getInnerText = (content: string) => {
@@ -240,7 +237,11 @@ const RendererTextAreaDivEl: FC<PropsWithChildren<{ elementAttrs: HTMLAttributes
   children,
 }) => {
   return (
-    <div className='component__renderer-field__textarea' ref={registerOverlayPortal} {...elementAttrs}>
+    <div 
+      className='component__renderer-field__textarea'
+      ref={registerOverlayPortal}
+      {...elementAttrs}
+    >
       {children}
     </div>
   )
