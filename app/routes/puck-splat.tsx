@@ -9,7 +9,8 @@ import { EmailHeaderPuckComponent } from './components/EmailHeader'
 import { EmailSectionTwoColumnsPuckComponent } from './components/EmailSectionTwoColumns'
 import { EmailFooterPuckComponent } from './components/EmailFooter'
 import type { Data } from '@measured/puck'
-import { DUMMY_ASSETS, metadata } from '~/data'
+import * as data from '~/data'
+import { useCallback, useState } from 'react'
 
 // export async function loader({ params }: Route.LoaderArgs) {
 //   const pathname = params["*"] ?? "/";
@@ -78,6 +79,14 @@ export function saveStorage(data: Data) {
 }
 
 export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
+  const [metadata, setMetadata] = useState(data.metadata)
+
+  const onLanguageChange = useCallback((selectedLanguage: string) => {
+    setMetadata(m => ({
+      ...m,
+      selectedLanguage
+    }))
+  }, [setMetadata])
   return (
     <div>
       <PuckEditor
@@ -99,10 +108,11 @@ export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
             components: ['EmailFooter', 'EmailHeader', 'EmailTwoColumnText'],
           }
         }}
-        assets={DUMMY_ASSETS}
+        assets={data.DUMMY_ASSETS}
         assetsDefaultBaseUrl='https://devk8s.azavista.com'
         metadata={metadata}
         onPublish={data => saveStorage(data)}
+        onLanguageChange={onLanguageChange}
         ></PuckEditor>
     </div>
   )

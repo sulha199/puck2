@@ -5,13 +5,28 @@ import {
   type WithId,
   type WithPuckProps,
 } from '@measured/puck'
-import { useCallback, useMemo, useState, type FC, type HTMLAttributes, type PropsWithChildren, type ReactElement } from 'react'
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+  type HTMLAttributes,
+  type PropsWithChildren,
+  type ReactElement,
+} from 'react'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
 import { InlineEditor } from 'ckeditor5'
 import { useDebounceCallback, useDebounceValue } from 'usehooks-ts'
 import { getReplacedContentWithMergeTags } from './RendererTextArea.utils'
 import { RENDERER_TEXTAREA_SAVE_TEXT_DEBOUNCE } from 'lib/shared/const'
-import { getLanguageMap, getPuckComponentIdFromFieldId, selectParentComponent, updateComponentData, useGetPuckAnyWhere } from '../PuckEditor/PuckEditor.util'
+import {
+  getLanguageMap,
+  getPuckComponentIdFromFieldId,
+  selectParentComponent,
+  updateComponentData,
+  useGetPuckAnyWhere,
+} from '../PuckEditor/PuckEditor.util'
 import type { AzavistaPuckComponent, PuckEditorLanguage, PuckEditorMetadata } from '../PuckEditor/type'
 import CkEditorPluginMergeFields from '../EditorRichText/CkEditor/CkEditor.plugin.MergeFields'
 import { delayFn } from 'lib/shared/utils'
@@ -38,60 +53,73 @@ export type RendererTextAreaInternalProps = {
   elementAttrs: HTMLAttributes<HTMLDivElement>
   lang: string
   selectedContent: string
-  params: URLSearchParams
 }
 
 export const RendererTextArea = (props: WithId<WithPuckProps<RendererTextAreaAttrProps>>) => {
+  const ckeditorID = useRef(new Date().getTime())
   const { content, useTranslation, contentTranslations, puck } = props
   const getPuck = useGetPuckAnyWhere()
   const isPuckEditing = !!getPuck
 
-  const params = new URL(document.location.toString()).searchParams
   const puckMetadata = puck.metadata as PuckEditorMetadata<{}>
-  const lang: string = puckMetadata.selectedLanguage || puckMetadata.languages[0].id
-
-  const fieldType = 'textarea'
-  const fieldName: keyof RendererTextAreaAttrProps = useTranslation ? 'contentTranslations' : 'content'
-
-  const selectedContentNode: ReactElement<FieldTransformFnParams<TextareaField>> = (
-    useTranslation ? contentTranslations[lang] : content
-  ) as any
-  const selectedContent: string = (isPuckEditing ? selectedContentNode?.props?.value : selectedContentNode) || ''
-
-  const elementAttrs: HTMLAttributes<HTMLDivElement> = {
-    ...({ 'data-field-type': fieldType, 'data-field-name': fieldName } as any),
-    'data-editing': isPuckEditing ? '' : null,
-    'data-lang': lang || null,
-  }
-
-  return isPuckEditing ? (
-    <RendererTextAreaDivEditor
-      elementAttrs={elementAttrs}
-      lang={lang}
-      selectedContent={selectedContent}
-      params={params}
-      {...props}
-    />
-  ) : (
-    <RendererTextAreaDivReadonly
-      elementAttrs={elementAttrs}
-      lang={lang}
-      selectedContent={selectedContent}
-      params={params}
-      {...props}
-    />
+  const lang: string = useMemo(
+    () => puckMetadata.selectedLanguage || puckMetadata.languages[0].id,
+    [puckMetadata.selectedLanguage]
   )
+
+  const fieldType = useMemo(() => 'textarea', [])
+  const fieldName: keyof RendererTextAreaAttrProps = useMemo(
+    () => (useTranslation ? 'contentTranslations' : 'content'),
+    [useTranslation]
+  )
+
+  const selectedContentNode: ReactElement<FieldTransformFnParams<TextareaField>> = useMemo(
+    () => (useTranslation ? contentTranslations[lang] : content) as any,
+    [useTranslation, content, contentTranslations[lang]]
+  )
+  const selectedContent: string = useMemo(
+    () => (isPuckEditing ? selectedContentNode?.props?.value : selectedContentNode) || '',
+    [isPuckEditing, selectedContentNode]
+  )
+
+  const elementAttrs: HTMLAttributes<HTMLDivElement> = useMemo(
+    () => ({
+      ...({ 'data-field-type': fieldType, 'data-field-name': fieldName } as any),
+      'data-editing': isPuckEditing ? '' : null,
+      'data-lang': lang || null,
+    }),
+    [fieldName, fieldType, isPuckEditing, lang]
+  )
+
+  const renderResult = useMemo(() => {
+    return isPuckEditing ? (
+      <RendererTextAreaDivEditor elementAttrs={elementAttrs} lang={lang} selectedContent={selectedContent} {...props} />
+    ) : (
+      <RendererTextAreaDivReadonly
+        elementAttrs={elementAttrs}
+        lang={lang}
+        selectedContent={selectedContent}
+        {...props}
+      />
+    )
+  }, [isPuckEditing, lang, elementAttrs, selectedContent])
+  return renderResult
 }
 
 export const RendererTextAreaDivReadonly = ({
   elementAttrs,
   lang,
-  params,
   selectedContent,
   puck,
 }: WithId<WithPuckProps<RendererTextAreaAttrProps & RendererTextAreaInternalProps>>) => {
   const { dictionary, participant } = puck.metadata as PuckEditorMetadata
-  let replacedContent = getReplacedContentWithMergeTags(selectedContent, params, lang, participant, dictionary[lang])
+  let replacedContent = getReplacedContentWithMergeTags(
+    selectedContent,
+    { dictionary: true, participant: true },
+    lang,
+    participant,
+    dictionary[lang]
+  )
   elementAttrs = {
     ...elementAttrs,
     dangerouslySetInnerHTML: { __html: replacedContent },
@@ -156,53 +184,53 @@ export const RendererTextAreaDivEditor = (
     return (
       <div className='component__renderer-field__textarea-popup'>
         {!isContentLanguageSet && <span className='component__renderer-field__textarea-popup__alert'></span>}
-        {isShowPopupButton && (
-          <button className='component__renderer-field__textarea-popup__button'>Edit Translations</button>
-        )}
+        <button className='component__renderer-field__textarea-popup__button'>Edit Translations</button>        
       </div>
     )
   }, [getPuck, isContentLanguageSet, isShowPopupButton])
 
-  const onFocusChange = useCallback(async (focusValue: boolean) => {
-    setIsFocussed(focusValue);
-    if (focusValue) {
-      const componentId = getPuckComponentIdFromFieldId(propsId)
-      if (componentId && getPuck) {
-        await delayFn(300);
-        selectParentComponent(componentId, getPuck);
+  const onFocusChange = useCallback(
+    async (focusValue: boolean) => {
+      setIsFocussed(focusValue)
+      if (focusValue) {
+        const componentId = getPuckComponentIdFromFieldId(propsId)
+        if (componentId && getPuck) {
+          await delayFn(300)
+          selectParentComponent(componentId, getPuck)
+        }
       }
-    }
-  }, [getPuck])
+    },
+    [getPuck]
+  )
 
   const onFocus = useCallback(async () => {
-    await onFocusChange(true);
+    await onFocusChange(true)
   }, [onFocusChange])
 
   const onBlur = useCallback(async () => {
-    await onFocusChange(false);
+    await onFocusChange(false)
   }, [onFocusChange])
 
   const editorChildren = useMemo(() => {
-    if (!getPuck) {
+    if (!getPuck || !setTextValueDebounced) {
       return undefined
     }
-    return setTextValueDebounced ? (
-      <>
-        <PuckCkEditor
-          editor={InlineEditor as any}
-          onChange={setTextValueDebounced}
-          value={selectedContent}
-          onFocus={onFocus}
-          onBlur={onBlur}
-        />
-      </>
-    ) : undefined
+    return (
+      <PuckCkEditor
+        editor={InlineEditor as any}
+        onChange={setTextValueDebounced}
+        value={selectedContent}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        parentId={`${propsId}_inlineEditor`}
+      />
+    )
   }, [setTextValueDebounced, getPuck, selectedContent, isFocussed])
 
   return (
     <>
       {editorPopupChildren}
-      <RendererTextAreaDivEl elementAttrs={elementAttrs}>{editorChildren}</RendererTextAreaDivEl>
+      <RendererTextAreaDivEl elementAttrs={{...elementAttrs, onClick: onFocus}}>{editorChildren}</RendererTextAreaDivEl>
     </>
   )
 }
@@ -212,11 +240,9 @@ const RendererTextAreaDivEl: FC<PropsWithChildren<{ elementAttrs: HTMLAttributes
   children,
 }) => {
   return (
-    <div
-      className='component__renderer-field__textarea'
-      ref={(ref) => registerOverlayPortal(ref)}
-      {...elementAttrs}
-      children={children}></div>
+    <div className='component__renderer-field__textarea' ref={registerOverlayPortal} {...elementAttrs}>
+      {children}
+    </div>
   )
 }
 
@@ -252,7 +278,7 @@ export const RendererTextAreaPuckComponent: (
       },
     },
     defaultProps: COMPONENT_DATA_RENDERER_TEXTAREA_DEFAULT,
-    render: (props) => RendererTextArea(props),
+    render: RendererTextArea,
   },
   overrideFieldsWrapper: {
     shouldDisplayPopup: true,

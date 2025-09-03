@@ -1,5 +1,5 @@
 import { type FieldRenderFunctions, type FieldProps, FieldLabel, type Field } from "@measured/puck"
-import type { PropsWithChildren } from "react"
+import { memo, type PropsWithChildren } from "react"
 import { getPuckComponentNameFromFieldId } from "./PuckEditor.util"
 import type { PuckEditorEditorMetadataProps } from "./PuckEditor"
 
@@ -8,7 +8,7 @@ export type FieldTypeContainerAdditionalProps = PropsWithChildren<{
   metadata: PuckEditorEditorMetadataProps
 }>
 
-export function FieldTypeContainer<T extends keyof FieldRenderFunctions, FieldType extends { type: T }>(
+export const FieldTypeContainer= memo(function<T extends keyof FieldRenderFunctions, FieldType extends { type: T }>(
   props: FieldProps<FieldType, any> & FieldTypeContainerAdditionalProps
 ) {
   const { children, field, value, name } = props
@@ -18,7 +18,7 @@ export function FieldTypeContainer<T extends keyof FieldRenderFunctions, FieldTy
       {children}
     </div>
   )
-}
+})
 
 export const getConfigFieldVersion = <T extends number>(maxVersionNumber: T) => {
   return {

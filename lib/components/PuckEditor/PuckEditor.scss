@@ -98,6 +98,9 @@
       &__button {
         z-index: 9999999999999999999;
         padding: 1em;
+        width: 100%;
+        cursor: pointer;
+        display: none; // button will be displayed when parent is hovered
       }
       &__alert::after {
         position: absolute;
@@ -106,7 +109,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        content: "!";
+        content: '!';
         width: 1em;
         height: 1em;
         line-height: 1em;
@@ -115,5 +118,12 @@
         border-radius: 50%;
       }
     }
+  }
+}
+
+*:has(> .component__renderer-field__textarea-popup):hover {
+  margin-top: -2em;
+  .component__renderer-field__textarea-popup__button {
+    display: block;
   }
 }

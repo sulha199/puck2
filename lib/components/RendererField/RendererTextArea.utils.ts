@@ -1,7 +1,11 @@
 import type { Participant } from "@azavista/advanced-search"
 import type { PuckEditorDictionaryItem } from "../PuckEditor/type"
 
-export function getReplacedContentWithMergeTags(selectedContent: string, params: URLSearchParams, lang: string, participant: Participant, dictionary: PuckEditorDictionaryItem) {
+export function getReplacedContentWithMergeTags(selectedContent: string, params: {
+  participant: boolean;
+  dictionary: boolean;
+}, lang: string, participant: Participant, dictionary: PuckEditorDictionaryItem) {
+  const paramsAny = params as Record<string, boolean>;
   const mergeTags = [...selectedContent.matchAll(/\{\{[^\}]+\}\}/gm)]
   let replacedContent = `${selectedContent}`
   mergeTags.forEach((regexResult) => {
@@ -12,7 +16,7 @@ export function getReplacedContentWithMergeTags(selectedContent: string, params:
       .trim()
       .split('.')
 
-    if (params.get(entity) != null) {
+    if (paramsAny[entity] != null) {
       let replacement = `{{${entity}.${field} is unknown}}`
       switch (entity) {
         case 'participant': {

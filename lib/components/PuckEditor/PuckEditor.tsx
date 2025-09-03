@@ -9,11 +9,26 @@ import {
   type DefaultComponentProps,
   type DefaultRootFieldProps,
   type OnAction,
-  ActionBar} from '@measured/puck'
+  AutoField,
+  ActionBar,
+  type SelectField,
+} from '@measured/puck'
+import {} from '@measured/puck'
 import editorStyles from '@measured/puck/puck.css?url'
 import { delayFn } from 'lib/shared/utils'
-import { useState, useRef, useEffect, useMemo, type FC, type ReactNode, type JSX } from 'react'
-import { useTimeout } from 'usehooks-ts'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  type FC,
+  type ReactNode,
+  type JSX,
+  memo,
+  type PropsWithChildren,
+  useCallback,
+} from 'react'
+import { useDebounceCallback, useIntersectionObserver, useTimeout } from 'usehooks-ts'
 import { PuckCkEditor } from '../EditorRichText/CkEditor/CkEditor'
 import { FieldTypeContainer, type FieldTypeContainerAdditionalProps } from './PuckEditor.ui.util'
 import {
@@ -33,21 +48,23 @@ import type { Asset } from 'lib/shared/types'
 
 export type PuckEditorEditorProps = {
   assets: Asset[]
-  assetsDefaultBaseUrl: string;
+  assetsDefaultBaseUrl: string
   onPublish: (data: Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>) => void
   onAction?: OnAction<Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>>
+  onLanguageChange: (language: string) => void
   isDebug: boolean
 }
 
 export type PuckEditorEditorMetadataProps<Props extends {} = {}> = PuckEditorMetadata<Props> &
   Pick<PuckEditorEditorProps, 'assets' | 'assetsDefaultBaseUrl'>
 
-export function PuckEditor<
+export const PuckEditor = memo(function <
   MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
   ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
   CategoryName extends string,
   Metadata extends PuckEditorMetadata<{}>,
 >(props: PuckEditorProps<MainComponentMap, ChildComponentMap, CategoryName, Metadata> & PuckEditorEditorProps) {
+  type ComponentProps = typeof props
   const {
     childComponentMap,
     contentData,
@@ -58,7 +75,8 @@ export function PuckEditor<
     isDebug,
     metadata,
     assets,
-    assetsDefaultBaseUrl
+    assetsDefaultBaseUrl,
+    onLanguageChange,
   } = props
 
   const allComponents = useMemo(
@@ -78,32 +96,41 @@ export function PuckEditor<
   const iframeRef = useRef<Document>(null)
   const outlinesDivRef = useRef<HTMLDivElement>(null)
   const getPuckFnRef = useRef<GetPuckFn<any>>(null)
-  const updateOutline = (getPuck: GetPuckFn<any>) => {
-    const attrComponentId = 'data-puck-outline-component-id'
-    const attrComponentType = 'data-puck-outline-component-type'
-    const {
-      appState: {
-        data: { content },
-      },
-    } = getPuck()
-    const outlineItemEls = Array.from(outlinesDivRef.current?.querySelectorAll<HTMLLIElement>(':scope > ul > li') || [])
-    outlineItemEls.forEach((el, index) => {
-      const component = content?.[index]
-      const propsId = component.props.id || ''
-      el.setAttribute(attrComponentId, propsId)
-      el.setAttribute(attrComponentType, component.type)
+  const updateOutline = useCallback(
+    (getPuck: GetPuckFn<any>) => {
+      const attrComponentId = 'data-puck-outline-component-id'
+      const attrComponentType = 'data-puck-outline-component-type'
+      const {
+        appState: {
+          data: { content },
+        },
+      } = getPuck()
+      const outlineItemEls = Array.from(
+        outlinesDivRef.current?.querySelectorAll<HTMLLIElement>(':scope > ul > li') || []
+      )
+      outlineItemEls.forEach((el, index) => {
+        const component = content?.[index]
+        const propsId = component.props.id || ''
+        if (el.getAttribute(attrComponentId) !== propsId) {
+          el.setAttribute(attrComponentId, propsId)
+          el.setAttribute(attrComponentType, component.type)
+        }
 
-      const componentName = getPuckComponentNameAsLabel(propsId, getPuck)
-      if (componentName) {
-        el.querySelector('[class*="Layer-name"]')!.innerHTML = componentName
-      }
-    })
-  }
+        const componentName = getPuckComponentNameAsLabel(propsId, getPuck)
+        if (componentName) {
+          el.querySelector('[class*="Layer-name"]')!.innerHTML = componentName
+        }
+      })
+    },
+    [outlinesDivRef.current]
+  )
+
+  const updateOutlineDebounced = useDebounceCallback(updateOutline, 500)
 
   const editorMetadata = {
     ...metadata,
     assets,
-    assetsDefaultBaseUrl
+    assetsDefaultBaseUrl,
   } as PuckEditorEditorMetadataProps<{}>
 
   function CommonFieldRenderer<
@@ -127,9 +154,30 @@ export function PuckEditor<
       }
     }
 
-    const AlternateRenderer = DefaultRenderer ?? FieldTypeContainer
+    const AlternateRenderer = useMemo(() => DefaultRenderer ?? FieldTypeContainer, [DefaultRenderer])
     return <AlternateRenderer {...props}></AlternateRenderer>
   }
+
+  const CustomHeaderActions = useCallback(
+    ({ children }: PropsWithChildren) => {
+      const languageField: SelectField = {
+        label: 'Language',
+        type: 'select',
+        options: metadata.languages.map((language) => ({
+          ...language,
+          value: language.id,
+        })),
+      }
+      return (
+        <div className='puck__header__actions aza-cmp-flex-row'>
+          <AutoField field={languageField} value={metadata.selectedLanguage} onChange={onLanguageChange} />
+          <div className='aza-cmp-half-padding'></div>
+          {children}
+        </div>
+      )
+    },
+    [metadata.languages, onLanguageChange, metadata.selectedLanguage]
+  )
 
   return (
     <>
@@ -143,17 +191,38 @@ export function PuckEditor<
         metadata={editorMetadata}
         overrides={{
           fieldTypes: {
-            textarea: (props) => (
-              <CommonFieldRenderer
-                {...props}
-                metadata={editorMetadata}
-                DefaultRenderer={() => (
-                  <FieldTypeContainer {...props} metadata={editorMetadata}>
-                    {props.field.label && <FieldLabel label={props.field.label} />}
-                    <PuckCkEditor {...props} />{' '}
-                  </FieldTypeContainer>
-                )}
-              />
+            textarea: memo(
+              (props) => {
+                const { isIntersecting, ref } = useIntersectionObserver({
+                  threshold: 0.5,
+                })
+                return (
+                  <div ref={ref}>
+                    <CommonFieldRenderer
+                      {...props}
+                      metadata={editorMetadata}
+                      DefaultRenderer={memo(() => {
+                        return (
+                          <FieldTypeContainer {...props} metadata={editorMetadata}>
+                            {props.field.label && <FieldLabel label={props.field.label} />}
+                            {useMemo(() => {
+                              return (
+                                isIntersecting && (
+                                  <PuckCkEditor
+                                    {...props}
+                                    parentId={`${props.id || ''}__${props.name}_${props.field.type}`}
+                                  />
+                                )
+                              )
+                            }, [isIntersecting, props.value])}{' '}
+                          </FieldTypeContainer>
+                        )
+                      })}
+                    />
+                  </div>
+                )
+              },
+              () => true
             ),
 
             text: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
@@ -168,18 +237,20 @@ export function PuckEditor<
             slot: (props) => <CommonFieldRenderer {...props} DefaultRenderer={undefined} metadata={editorMetadata} />,
           } satisfies FieldRenderFunctions,
           actionBar: (props) => {
-            let {children, parentAction, label} = props            
+            let { children, parentAction, label } = props
             const getPuck = useGetPuck() as any as GetPuckFn<any>
-            const {selectedItem} = getPuck()
+            const { selectedItem } = getPuck()
             const selectedItemId: string | undefined = selectedItem?.props.id
-            label = selectedItemId ? getPuckComponentNameAsLabel(selectedItemId, getPuck) : label;
-            return <ActionBar>
-              <ActionBar.Group>
-                {parentAction}
-                {label && <ActionBar.Label label={label} />}
-              </ActionBar.Group>
-              <ActionBar.Group>{children}</ActionBar.Group>
-            </ActionBar>
+            label = selectedItemId ? getPuckComponentNameAsLabel(selectedItemId, getPuck) : label
+            return (
+              <ActionBar>
+                <ActionBar.Group>
+                  {parentAction}
+                  {label && <ActionBar.Label label={label} />}
+                </ActionBar.Group>
+                <ActionBar.Group>{children}</ActionBar.Group>
+              </ActionBar>
+            )
           },
           drawer: (props) => {
             const { children } = props
@@ -233,9 +304,7 @@ export function PuckEditor<
             }, [document])
             return <>{children}</>
           },
-          headerActions: ({ children }) => {
-            return <div className='dsdsdsdsdsd'>{children}</div>
-          },
+          headerActions: CustomHeaderActions,
           outline: ({ children }) => {
             const getPuck = useGetPuck() as any as GetPuckFn<any>
             getPuckFnRef.current = getPuck
@@ -264,12 +333,17 @@ export function PuckEditor<
             console.log('onAction', action.type, { action, newState, prevState })
           }
 
-          if ((action.type === 'setData' || action.type === 'replace') && getPuck) {
-            await delayFn(500)
-            updateOutline(getPuck)
+          if (getPuck) {
+            const { selectedItem } = getPuck()
+            if (
+              action.type === 'setData' ||
+              (action.type === 'replace' && action.data.props?.id === selectedItem?.props?.id)
+            ) {
+              updateOutlineDebounced(getPuck)
+            }
           }
         }}
       />
     </>
   )
-}
+})
