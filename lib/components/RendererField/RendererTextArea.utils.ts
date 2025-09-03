@@ -22,10 +22,12 @@ export function getReplacedContentWithMergeTags(selectedContent: string, params:
         case 'participant': {
           const fieldValue = (participant as any)[field]
           replacement = fieldValue ?? replacement
+          break
         }
         case 'dictionary': {
-          const fieldValue = (dictionary[lang] as any)[field]
+          const fieldValue = (dictionary)[field]
           replacement = fieldValue ?? replacement
+          break
         }
       }
       replacedContent = replacedContent.replaceAll(tag, replacement)
