@@ -45,6 +45,7 @@ import {
 } from './type'
 import './PuckEditor.scss'
 import type { Asset } from 'lib/shared/types'
+import CkEditorPluginMergeFields from '../EditorRichText/CkEditor/CkEditor.plugin.MergeFields'
 
 export type PuckEditorEditorProps = {
   assets: Asset[]
@@ -124,6 +125,11 @@ export const PuckEditor = memo(function <
     },
     [outlinesDivRef.current]
   )
+
+  useEffect(() => {    
+    CkEditorPluginMergeFields.dictionary = metadata.dictionary
+    CkEditorPluginMergeFields.participantFields = metadata.participantFields
+  }, [metadata.dictionary, metadata.participantFields])
 
   const updateOutlineDebounced = useDebounceCallback(updateOutline, 500)
 
