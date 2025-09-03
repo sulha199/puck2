@@ -148,7 +148,7 @@ export const getLanguageMap = (languages: PuckEditorLanguage[]) => {
   return languages.reduce(
     (record, lang) => ({
       ...record,
-      [lang.id]: { type: 'textarea', label: lang.label, contentEditable: true } as Omit<Field<string>, 'render'>,
+      [lang.id]: { type: 'textarea', label: lang.label, contentEditable: false } as Omit<Field<string>, 'render'>,
     }),
     {} as Record<string, Omit<Field<string>, 'render'>>
   )
