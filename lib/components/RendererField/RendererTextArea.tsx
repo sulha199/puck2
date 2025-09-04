@@ -207,8 +207,8 @@ export const RendererTextAreaDivEditor = (
     await onFocusChange(false)
   }, [onFocusChange])
 
-  const EditorChildren = useCallback(() => {
-    if (!getPuck || !setTextValueDebounced) {
+  const EditorChildren = useMemo(() => {
+    if (!getPuck || !setTextValueDebounced || !inlineRTEEnabled) {
       return undefined
     }
     return (
@@ -228,7 +228,7 @@ export const RendererTextAreaDivEditor = (
       {editorPopupChildren}
       {inlineRTEEnabled ? (
         <RendererTextAreaDivEl elementAttrs={{ ...elementAttrs, onClick: onFocus }} inlineRTEEnabled={inlineRTEEnabled}>
-          {<EditorChildren />}
+          {EditorChildren}
         </RendererTextAreaDivEl>
       ) : (
         <RendererTextAreaDivReadonly {...props} />
@@ -256,9 +256,6 @@ export const RendererTextAreaPuckComponent: (params: {
 }) => AzavistaPuckComponent<RendererTextAreaAttrProps> = ({ languages, inlineRTEEnabled }) => ({
   componentData: {
     label: 'Text Area',
-    resolveFields: async (data, params) => {
-      return params.fields
-    },
     fields: {
       useTranslation: {
         label: 'Translate',
@@ -304,6 +301,7 @@ export const RendererTextAreaPuckComponent: (params: {
           },
         },
       }
+      // the logic is needed to avoid the non-edited contentTranslations' item to become empty string
       Object.keys(newData.props.contentTranslations || {}).forEach((langId) => {
         const replacement = params?.lastData?.props.contentTranslations?.[langId] || ''
         if (!(newData.props.contentTranslations as any)[langId] && replacement) {
@@ -311,6 +309,7 @@ export const RendererTextAreaPuckComponent: (params: {
         }
       })
 
+      // we need to assign newData to data again, so that the next params?.lastData also contain the latest data
       Object.assign(data, newData)
       return data
     },
