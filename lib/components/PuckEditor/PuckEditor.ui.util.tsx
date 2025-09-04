@@ -11,10 +11,10 @@ export type FieldTypeContainerAdditionalProps = PropsWithChildren<{
 export const FieldTypeContainer= memo(function<T extends keyof FieldRenderFunctions, FieldType extends { type: T }>(
   props: FieldProps<FieldType, any> & FieldTypeContainerAdditionalProps
 ) {
-  const { children, field, value, name } = props
+  const { children, field, value, name, id } = props
   return (
     <div
-      className={`puck-fields__field puck-fields__field--name_${name} puck-fields__field--type_${field.type} puck-fields__field--value_${value}`}>
+      className={`puck-fields__field puck-fields__field--name_${name} puck-fields__field--id_${id || '_'} puck-fields__field--type_${field.type} puck-fields__field--value_${value}`}>
       {children}
     </div>
   )
