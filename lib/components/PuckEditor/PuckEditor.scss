@@ -127,3 +127,7 @@
     display: block;
   }
 }
+
+*[data-puck-component][data-puck-dnd] {
+  min-height: 1em;
+}

@@ -9,6 +9,7 @@ import {
 import {
   type AzavistaPuckComponent,
   type AzavistaPuckMainComponent,
+  type ChildProps,
   type PuckConfigComponents,
   type PuckEditorLanguage,
   type PuckEditorMetadata,
@@ -118,7 +119,7 @@ export const getComponent = <PuckConfig extends Config, T extends keyof PuckConf
 }
 
 export function getUIEditorPuckConfig<
-  MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
+  MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number, ChildProps<ChildComponentMap>> },
   ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
   CategoryName extends string,
   Metadata extends PuckEditorMetadata<{}>,
@@ -144,11 +145,11 @@ export function getUIEditorPuckConfig<
   } as any
 }
 
-export const getLanguageMap = (languages: PuckEditorLanguage[]) => {
+export const getLanguageMap = (languages: PuckEditorLanguage[], inlineRTEEnabled: boolean) => {
   return languages.reduce(
     (record, lang) => ({
       ...record,
-      [lang.id]: { type: 'textarea', label: lang.label, contentEditable: false } as Omit<Field<string>, 'render'>,
+      [lang.id]: { type: 'textarea', label: lang.label, contentEditable: inlineRTEEnabled } as Omit<Field<string>, 'render'>,
     }),
     {} as Record<string, Omit<Field<string>, 'render'>>
   )

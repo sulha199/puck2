@@ -2,12 +2,13 @@ import type { Slot } from '@measured/puck'
 import { EmailSectionContainer } from 'lib/components/Commons/EmailSectionContainer'
 import { getConfigFieldVersion, getConfigFieldCss } from 'lib/components/PuckEditor/PuckEditor.ui.util'
 import type { AzavistaPuckMainComponent } from 'lib/components/PuckEditor/type'
+import type { RendererTextAreaAttrProps } from 'lib/components/RendererField/RendererTextArea'
 import type { CssSelection } from 'lib/shared/types'
 
 export const EmailFooterPuckComponent: AzavistaPuckMainComponent<{
   content: Slot
   css: CssSelection
-}, 2> = {
+}, 2, { type: 'RendererTextArea', props: RendererTextAreaAttrProps }> = {
   componentData: {
     fields: {
       name: { type: 'text' },
@@ -25,6 +26,8 @@ export const EmailFooterPuckComponent: AzavistaPuckMainComponent<{
           type: 'RendererTextArea',
           props: {
             content: 'Street | City | Country | Phone | Email',
+            contentTranslations: {},
+            useTranslation: 0,
           },
         },
       ],

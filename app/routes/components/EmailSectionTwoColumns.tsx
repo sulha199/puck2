@@ -2,14 +2,19 @@ import type { Slot } from '@measured/puck'
 import { EmailSectionTwoColumn } from 'lib/components/Commons/EmailSectionContainer'
 import { getConfigFieldVersion, getConfigFieldCss } from 'lib/components/PuckEditor/PuckEditor.ui.util'
 import type { AzavistaPuckMainComponent } from 'lib/components/PuckEditor/type'
-import type {  CssSelection } from 'lib/shared/types'
+import type { RendererTextAreaAttrProps } from 'lib/components/RendererField/RendererTextArea'
+import type { CssSelection } from 'lib/shared/types'
 
-export const EmailSectionTwoColumnsPuckComponent: AzavistaPuckMainComponent<{
-  col1: Slot
-  col2: Slot
-  type: 'type-1' | 'type-2'
-  css: CssSelection
-}, 2> = {
+export const EmailSectionTwoColumnsPuckComponent: AzavistaPuckMainComponent<
+  {
+    col1: Slot
+    col2: Slot
+    type: 'type-1' | 'type-2'
+    css: CssSelection
+  },
+  2,
+  { type: 'RendererTextArea'; props: RendererTextAreaAttrProps }
+> = {
   componentData: {
     label: 'Section Two-Columns text',
     render: (params) => {
@@ -65,6 +70,8 @@ export const EmailSectionTwoColumnsPuckComponent: AzavistaPuckMainComponent<{
           type: 'RendererTextArea',
           props: {
             content: `This is a column in a two column text section. Content related to the event can be added here.`,
+            contentTranslations: {},
+            useTranslation: 0,
           },
         },
       ],
@@ -73,6 +80,8 @@ export const EmailSectionTwoColumnsPuckComponent: AzavistaPuckMainComponent<{
           type: 'RendererTextArea',
           props: {
             content: `This is a column in a two column text section. Content related to the event can be added here.`,
+            contentTranslations: {},
+            useTranslation: 0,
           },
         },
       ],

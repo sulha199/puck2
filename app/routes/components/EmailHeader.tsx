@@ -1,5 +1,6 @@
 import type { Slot } from '@measured/puck'
 import { EmailSectionContainer } from 'lib/components/Commons/EmailSectionContainer'
+import { COMPONENT_DATA_HTML_IMAGE_DEFAULT, type HtmlImageProps } from 'lib/components/Commons/HtmlImage'
 import { getConfigFieldVersion, getConfigFieldCss } from 'lib/components/PuckEditor/PuckEditor.ui.util'
 import type { AzavistaPuckMainComponent } from 'lib/components/PuckEditor/type'
 import type {  CssSelection } from 'lib/shared/types'
@@ -7,7 +8,7 @@ import type {  CssSelection } from 'lib/shared/types'
 export const EmailHeaderPuckComponent: AzavistaPuckMainComponent<{
   children: Slot
   css: CssSelection
-}, 2> = {
+}, 2, { type: 'HtmlImage', props: HtmlImageProps }> = {
   componentData: {
     fields: {
         name: {type: 'text'},
@@ -40,7 +41,9 @@ export const EmailHeaderPuckComponent: AzavistaPuckMainComponent<{
       children: [
         {
           type: 'HtmlImage',
-          props: {},
+          props: {
+            ...COMPONENT_DATA_HTML_IMAGE_DEFAULT,
+          },
         },
       ],
       css: [],

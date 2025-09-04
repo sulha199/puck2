@@ -42,6 +42,7 @@ import {
   type AzavistaPuckComponent,
   type PuckEditorProps,
   type PuckEditorMetadata,
+  type ChildProps,
 } from './type'
 import './PuckEditor.scss'
 import type { Asset } from 'lib/shared/types'
@@ -54,18 +55,18 @@ export type PuckEditorEditorProps = {
   onAction?: OnAction<Data<DefaultComponents, DefaultComponentProps & DefaultRootFieldProps>>
   onLanguageChange: (language: string) => void
   isDebug: boolean
+  inlineRTEEnabled: boolean;
 }
 
 export type PuckEditorEditorMetadataProps<Props extends {} = {}> = PuckEditorMetadata<Props> &
-  Pick<PuckEditorEditorProps, 'assets' | 'assetsDefaultBaseUrl'>
+  Pick<PuckEditorEditorProps, 'assets' | 'assetsDefaultBaseUrl' | 'inlineRTEEnabled'>
 
 export const PuckEditor = memo(function <
-  MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
+  MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number, ChildProps<ChildComponentMap>> },
   ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
   CategoryName extends string,
   Metadata extends PuckEditorMetadata<{}>,
 >(props: PuckEditorProps<MainComponentMap, ChildComponentMap, CategoryName, Metadata> & PuckEditorEditorProps) {
-  type ComponentProps = typeof props
   const {
     childComponentMap,
     contentData,
@@ -78,6 +79,7 @@ export const PuckEditor = memo(function <
     assets,
     assetsDefaultBaseUrl,
     onLanguageChange,
+    inlineRTEEnabled,
   } = props
 
   const allComponents = useMemo(
@@ -89,9 +91,6 @@ export const PuckEditor = memo(function <
   )
   const allComponentsName = useMemo(() => Object.keys(allComponents), [allComponents])
   const puckConfig = useMemo(() => getUIEditorPuckConfig(props), [mainComponentMap, childComponentMap, categories])
-
-  // type PuckConfig = typeof puckConfig;
-  type PuckConfig = any
 
   const [isReadOnly, setIsReadOnly] = useState(false)
   const iframeRef = useRef<Document>(null)
@@ -137,6 +136,7 @@ export const PuckEditor = memo(function <
     ...metadata,
     assets,
     assetsDefaultBaseUrl,
+    inlineRTEEnabled,
   } as PuckEditorEditorMetadataProps<{}>
 
   function CommonFieldRenderer<
@@ -220,7 +220,7 @@ export const PuckEditor = memo(function <
                                   />
                                 )
                               )
-                            }, [isIntersecting, props.value])}{' '}
+                            }, [isIntersecting, props.value, props.onChange])}{' '}
                           </FieldTypeContainer>
                         )
                       })}
@@ -336,7 +336,41 @@ export const PuckEditor = memo(function <
         onAction={async (action, newState, prevState) => {
           const getPuck = getPuckFnRef.current != null ? getPuckFnRef.current : undefined
           if (isDebug) {
-            console.log('onAction', action.type, { action, newState, prevState })
+            const getActionId = () => {
+              switch (action.type) {
+                case 'replace': {
+                  return action.data.props.id
+                }
+                case 'insert': {
+                  return action.id
+                }
+                case 'reorder': {
+                  return action.destinationZone
+                }
+                case 'move': {
+                  return action.destinationZone
+                }
+                case 'replaceRoot':
+                case 'remove': {
+                  return action.type
+                }
+                case 'duplicate':{
+                  return action.sourceZone
+                }
+                case 'setUi':{
+                  return action.type
+                }
+                case 'set':
+                case 'setData':
+                case 'registerZone':
+                case 'unregisterZone': {
+                  return ''
+                }
+              }
+            }
+            console.groupCollapsed('onAction', action.type, getActionId())
+            console.trace({ action, newState, prevState })
+            console.groupEnd()
           }
 
           if (getPuck) {

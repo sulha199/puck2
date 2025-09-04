@@ -1,10 +1,10 @@
 import { useMemo } from "react"
 import { getUIEditorPuckConfig } from "./PuckEditor.util"
-import type { AzavistaPuckMainComponent, AzavistaPuckComponent, PuckEditorProps, PuckEditorMetadata } from "./type"
+import type { AzavistaPuckMainComponent, AzavistaPuckComponent, PuckEditorProps, PuckEditorMetadata, ChildProps } from "./type"
 import { Render } from "@measured/puck"
 
 export function PuckEditorRenderer<
-  MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number> },
+  MainComponentMap extends { [componentName: string]: AzavistaPuckMainComponent<any, number, ChildProps<ChildComponentMap>> },
   ChildComponentMap extends { [componentName: string]: AzavistaPuckComponent<any> },
   CategoryName extends string,  
   Metadata extends PuckEditorMetadata<{}>

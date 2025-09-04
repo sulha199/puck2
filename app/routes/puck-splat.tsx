@@ -79,7 +79,12 @@ export function saveStorage(data: Data) {
 }
 
 export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
+  const urlParams = new URL(location.href).searchParams;
+
+  const inlineRTEEnabled = urlParams.get('inline_rte') != null;
+
   const [metadata, setMetadata] = useState(data.metadata)
+  const {languages} = metadata;
 
   const onLanguageChange = useCallback((selectedLanguage: string) => {
     setMetadata(m => ({
@@ -93,7 +98,7 @@ export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
         isDebug={true}
         childComponentMap={{
           HtmlImage: HtmlImagePuckComponent,
-          RendererTextArea: RendererTextAreaPuckComponent(metadata.languages),
+          RendererTextArea: RendererTextAreaPuckComponent({languages, inlineRTEEnabled}),
         }}
         mainComponentMap={{
           EmailHeader: EmailHeaderPuckComponent,
@@ -113,6 +118,7 @@ export default function PuckSplatRoute({ loaderData }: Route.ComponentProps) {
         metadata={metadata}
         onPublish={data => saveStorage(data)}
         onLanguageChange={onLanguageChange}
+        inlineRTEEnabled={inlineRTEEnabled}
         ></PuckEditor>
     </div>
   )
